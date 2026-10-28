@@ -330,6 +330,14 @@ def afterclose_research(state_path: Path, *, now: datetime | None = None,
         try:
             if ticker not in quotes or target not in quotes[ticker]:
                 raise ValueError("Missing valid completed candidate daily candle")
+            # CRITICAL: V3 paper research must not bypass the same as-of
+            # earnings veto as its independent read-only observer. A complete
+            # market bar alone cannot authorise a machine-accepted intent.
+            # Require a source-hash-bound V3 preclose snapshot for THIS ticker
+            # and decision session before creating the AI graph/model calls.
+            snapshot = _validated_calendar(state, root, target, "preclose", {ticker}, now)[ticker]
+            if not snapshot.safe(target, "afterclose"):
+                raise ValueError("V3_RESEARCH_EARNINGS_EVIDENCE_MISSING_OR_BLACKOUT")
             if graph is None:
                 graph = graph_factory(root)
             receipt, plan, research = research_fn(graph, ticker=ticker, session=target,
