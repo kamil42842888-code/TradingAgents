@@ -217,10 +217,12 @@ def test_crlf_or_fake_source_hash_never_becomes_approved(tmp_path):
     assert out["paper_orders_created"]==0
 
 
-def test_dry_run_is_restricted_to_at_most_three_stocks(tmp_path):
+def test_dry_run_is_restricted_to_at_most_eight_stocks(tmp_path):
     home=saved(tmp_path)
-    with pytest.raises(ValueError,match="1-8|1-3"):
-        dry.run_dry_run(tmp_path/"too_many",home,DAY,["AAPL","MSFT","NVDA","COST"],now=at(18,5))
+    with pytest.raises(ValueError,match="1-8"):
+        dry.run_dry_run(tmp_path/"too_many",home,DAY,
+                        ["AAPL","MSFT","NVDA","COST","JPM","WMT","NKE","UNH","HD"],
+                        now=at(18,5))
 
 
 def test_rejects_earnings_from_after_immutable_calendar_capture(tmp_path):
@@ -307,3 +309,24 @@ def test_preflight_cli_is_read_only_on_historical_archive(tmp_path, capsys):
     ]) == 0
     assert "READ_ONLY_PREFLIGHT_HISTORICAL_AI_FORBIDDEN" in capsys.readouterr().out
     assert not output.exists()
+
+
+def test_eight_subjects_can_be_audited_without_eight_paid_model_calls(tmp_path):
+    """Eight observed tickers is NOT permission to run eight AI committees."""
+    names=["AAPL","MSFT","NVDA","COST","JPM","WMT","NKE","UNH"]
+    m=market()
+    c=calendar()
+    for ticker in names[3:]:
+        m["ohlc_usd"][ticker]={"open":100,"high":102,"low":99,"close":101}
+        c["earnings"][ticker]={
+            "asof_date":DAY,"next_earnings_date":None,"last_earnings_date":None,
+            "source":"UNVERIFIED_EARNINGS_SOURCE","verified":False,
+            "observed_at_utc":at(17,10).astimezone(timezone.utc).isoformat(),
+        }
+    home=saved(tmp_path,m=m,c=c,tickers=names)
+    report=dry.run_dry_run(tmp_path/"eight",home,DAY,names,ai_count=0,now=at(18,5))
+    assert set(report["research"])==set(names)
+    assert report["real_ai_attempted"] is False
+    assert report["paper_orders_created"]==0
+    assert report["account_reads"]==report["account_writes"]==0
+    assert (tmp_path/"eight"/"DRY_RUN_MANIFEST.json").is_file()
