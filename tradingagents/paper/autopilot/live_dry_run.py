@@ -66,7 +66,7 @@ def _strict_bar(raw: object, symbol: str) -> Bar:
 def read_observation(observer: Path, session: str, tickers: list[str], now: datetime) -> dict:
     """Validate immutable real-source files, as-of dates and risk evidence."""
     day = _asof(session)
-    names = normalize_tickers(tickers, cap=3)
+    names = normalize_tickers(tickers, cap=8)
     home = observe.observation_home(observer)
     market = home / "market" / (session + ".json")
     if not market.is_file():
@@ -191,7 +191,7 @@ def run_dry_run(
     now = now.astimezone(timezone.utc)
     if type(ai_count) is not int or not 0 <= ai_count <= 3:
         raise ValueError("AI budget must be between zero and three")
-    names = normalize_tickers(tickers, cap=3)
+    names = normalize_tickers(tickers, cap=8)
     data = read_observation(observer, session, names, now)
     live = now.astimezone(NY).date() == _asof(session)
     if ai_count and not live:
@@ -294,7 +294,7 @@ def main(argv=None) -> int:
     )
     parser.add_argument("--observer", type=Path, default=observe.DEFAULT_OBSERVATION_HOME)
     parser.add_argument("--session", required=True, help="Observed NY market session YYYY-MM-DD")
-    parser.add_argument("--tickers", nargs="+", default=["AAPL", "MSFT", "NVDA"])
+    parser.add_argument("--tickers", nargs="+", required=True, help="Exact archived observation ticker set, 1-8")
     parser.add_argument("--ai", type=int, default=0, choices=(0, 1, 2, 3),
                         help="Real LLM analyses (same NY session after 17:40 only)")
     parser.add_argument("--output", type=Path, required=True, help="NEW, independent audit folder")
