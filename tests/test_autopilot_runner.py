@@ -375,3 +375,62 @@ def test_automated_runner_never_overwrites_the_existing_v3_staging_account(tmp_p
     with pytest.raises(ValueError,match="immutable"):
         state_mod.create_new(earlier,D1,["NVDA"])
     assert earlier.read_text()=="PREEXISTING STAGING LEDGER"
+
+
+def test_missing_preclose_blocks_paper_machine_research_before_model(tmp_path):
+    path=create(tmp_path)
+    runner.mark_closed_sessions(path,now=when(D1),loader=loader())
+    st=read(path); st.set_running(True); atomic_write(path,st)
+    calls=[]
+    def graph_factory(*args):
+        calls.append("started")
+        raise AssertionError("Unverified earnings must block AI")
+    result=runner.afterclose_research(
+        path,now=when(D1),loader=loader(),graph_factory=graph_factory)
+    st=read(path)
+    assert result["reviewed"]==1
+    assert calls==[]
+    assert st.ai_receipts[f"{D1}:NVDA"]["decision"]=="NO_TRADE"
+    assert not st.portfolio.intents
+    assert not st.portfolio.book.orders
+
+
+def test_tampered_preclose_blocks_paper_machine_research(tmp_path):
+    path=create(tmp_path)
+    runner.mark_closed_sessions(path,now=when(D1),loader=loader())
+    st=read(path); st.set_running(True); atomic_write(path,st)
+    captured=capture(path,D1,"preclose")
+    evidence=Path(captured["path"])
+    blob=json.loads(evidence.read_text())
+    blob["earnings"]["NVDA"]["next_earnings_date"]="2027-12-15"
+    evidence.write_text(json.dumps(blob))
+    calls=[]
+    runner.afterclose_research(
+        path,now=when(D1),loader=loader(),
+        graph_factory=lambda *_:calls.append("started"))
+    st=read(path)
+    assert calls==[]
+    assert st.ai_receipts[f"{D1}:NVDA"]["decision"]=="NO_TRADE"
+    assert not st.portfolio.intents
+
+
+def test_blackout_preclose_blocks_paper_machine_research(tmp_path):
+    path=create(tmp_path)
+    runner.mark_closed_sessions(path,now=when(D1),loader=loader())
+    st=read(path); st.set_running(True); atomic_write(path,st)
+    at=when(D1,17,10)
+    runner.snapshot_phase(
+        path,phase="preclose",now=at,
+        fetcher=lambda ticker,session,now: EarningsSnapshot(
+            session,"2026-10-24","2026-07-21",
+            "YAHOO+NASDAQ_CONSENSUS_SECONDARY",True,
+            now.astimezone(timezone.utc).isoformat()),
+        completion_clock=lambda:at)
+    calls=[]
+    runner.afterclose_research(
+        path,now=when(D1),loader=loader(),
+        graph_factory=lambda *_:calls.append("started"))
+    st=read(path)
+    assert calls==[]
+    assert st.ai_receipts[f"{D1}:NVDA"]["decision"]=="NO_TRADE"
+    assert not st.portfolio.intents
