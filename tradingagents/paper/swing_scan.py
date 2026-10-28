@@ -174,7 +174,9 @@ def build_queue(*, home: Path = HOME, now: datetime | None = None,
         from tradingagents.dataflows.vendor_gateway import get_yahoo_ticker
         profile_source = lambda ticker: get_yahoo_ticker(ticker.replace(".", "-")).info
     clock = completion_clock or (lambda: datetime.now(timezone.utc))
+    profiles_checked = 0
     for row in ordered[:max_profiles]:
+        profiles_checked += 1
         try:
             profile, reason = _profile_eligible(profile_source(row["ticker"]), rules)
         except Exception as exc:
@@ -226,7 +228,7 @@ def build_queue(*, home: Path = HOME, now: datetime | None = None,
         "price_screen_accepted": len(ordered),
         "price_vendor_responses": len(returned),
         "price_source_coverage_fraction": round(len(returned) / len(chosen), 5),
-        "profiles_considered": min(max_profiles, len(ordered)),
+        "profiles_considered": profiles_checked,
         "selection_rotates_by_session": bool(max_symbols and len(chosen) < len(set(names))),
         "complete_daily_universe_coverage": len(chosen) == len(set(names)),
         "screening_exclusions": dict(sorted(exclude.items())),
