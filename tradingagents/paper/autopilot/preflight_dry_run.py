@@ -23,7 +23,7 @@ def inspect(observer: Path, session: str, tickers: list[str], *,
     current = now if now is not None else datetime.now(timezone.utc)
     if current.tzinfo is None or current.utcoffset() is None:
         raise ValueError("Readiness clock must be timezone-aware")
-    names = normalize_tickers(tickers, cap=3)
+    names = normalize_tickers(tickers, cap=8)
     source = live_dry_run.read_observation(
         observer, session, names, current.astimezone(timezone.utc),
     )
