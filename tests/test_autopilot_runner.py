@@ -192,6 +192,7 @@ def test_missing_required_bar_keeps_entire_account_unchanged(tmp_path):
 def test_new_ai_receipt_is_idempotent_and_no_rating_only_orders(tmp_path):
     path=create(tmp_path)
     runner.mark_closed_sessions(path,now=when(D1),loader=loader())
+    capture(path,D1,"preclose")
     st=read(path)
     st.set_running(True)
     atomic_write(path,st)
@@ -213,6 +214,7 @@ def test_new_ai_receipt_is_idempotent_and_no_rating_only_orders(tmp_path):
 def test_ai_valid_conditional_proposal_is_only_a_watching_intent(tmp_path):
     path=create(tmp_path)
     runner.mark_closed_sessions(path,now=when(D1),loader=loader())
+    capture(path,D1,"preclose")
     st=read(path)
     st.set_running(True)
     atomic_write(path,st)
@@ -270,6 +272,7 @@ def test_end_to_end_llm_handoff_requires_verbatim_pm_and_trader_proof(monkeypatc
         def save_reports(self,*args,**kw):return None
     path=create(tmp_path)
     runner.mark_closed_sessions(path,now=when(D1),loader=loader())
+    capture(path,D1,"preclose")
     st=read(path)
     st.set_running(True)
     atomic_write(path,st)
@@ -311,6 +314,7 @@ def test_bad_ai_report_cannot_claim_an_executable_stop(monkeypatch,tmp_path):
         def save_reports(self,*a,**kw):pass
     path=create(tmp_path)
     runner.mark_closed_sessions(path,now=when(D1),loader=loader())
+    capture(path,D1,"preclose")
     st=read(path);st.set_running(True);atomic_write(path,st)
     runner.afterclose_research(path,now=when(D1),loader=loader(),graph_factory=lambda r:Graph(),
                   research_fn=lambda graph,**kw:runner._research_one(graph,**kw,
