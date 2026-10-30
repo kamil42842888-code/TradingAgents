@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, date, timedelta, timezone
+from types import SimpleNamespace
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -49,6 +50,13 @@ def profile(ticker):
             "marketCap": 10_000_000_000, "sector": sectors.get(ticker,"Industrials")}
 
 
+def earnings(ticker, session, now):
+    return SimpleNamespace(asof_date=session, verified=True,
+         source="YAHOO+NASDAQ_CONSENSUS_SECONDARY",
+         last_earnings_date="2026-09-15", next_earnings_date="2026-12-15",
+         observed_at_utc=now.astimezone(timezone.utc).isoformat())
+
+
 def params(tmp_path, names=None, price_source=None, profile_source=profile, now=None):
     names = names or ["AAA", "BBB", "CCC", "DDD", "EEE", "FFF"]
     return dict(home=tmp_path/"swing", now=now or clock(),
@@ -56,6 +64,7 @@ def params(tmp_path, names=None, price_source=None, profile_source=profile, now=
                 universe_source=lambda:(names,["MOCK listing universe"]),
                 price_source=price_source or market_fixture(names),
                 profile_source=profile_source,
+                earnings_source=earnings,
                 completion_clock=lambda: clock(18,11))
 
 
@@ -148,3 +157,68 @@ def test_vendor_duplicate_or_unlisted_ticker_halts_without_archiving(tmp_path):
     with pytest.raises(ValueError,match="outside declared universe or twice"):
         swing_scan.build_queue(**params(tmp_path,price_source=vendor))
     assert not list((tmp_path/"swing").rglob("*.json"))
+
+
+def test_next_week_earnings_never_enter_future_roster(tmp_path):
+    names=["AAA", "BBB", "CCC", "DDD"]
+    def source(ticker,session,now):
+        event=earnings(ticker,session,now)
+        if ticker=="AAA":event.next_earnings_date="2026-10-30"
+        return event
+    p=params(tmp_path,names)
+    p["earnings_source"]=source
+    result=swing_scan.build_queue(**p)
+    assert "AAA" not in result["next_session_research_watchlist"]
+    assert result["screening_exclusions"]["earnings_blackout_preview"]==1
+    assert result["paper_orders"]==0
+
+
+def test_missing_secondary_confirmation_fails_closed_without_fabrication(tmp_path):
+    names=["AAA", "BBB", "CCC", "DDD"]
+    def source(ticker,session,now):
+        event=earnings(ticker,session,now)
+        if ticker in ("AAA","BBB"):
+            event.verified=False
+        return event
+    p=params(tmp_path,names)
+    p["earnings_source"]=source
+    result=swing_scan.build_queue(**p)
+    assert not set(["AAA", "BBB"]) & set(result["next_session_research_watchlist"])
+    assert result["earnings_preview_checks"]==4
+    assert result["earnings_preview_accepted"]==2
+    assert result["screening_exclusions"]["unverified_secondary_earnings_preview"]==2
+    assert all(r["earnings_verification"]=="NOT_CAPTURED_FOR_NEXT_SESSION" for r in result["candidates"])
+
+
+def test_no_valid_earnings_previews_rejects_new_queue(tmp_path):
+    p=params(tmp_path)
+    p["earnings_source"]=lambda t,d,n:None
+    with pytest.raises(ValueError,match="No candidates passed the earnings-preview"):
+        swing_scan.build_queue(**p)
+    assert not list((tmp_path/"swing").rglob("*.json"))
+
+
+def test_preview_does_not_upgrade_to_future_earnings_approval(tmp_path):
+    result=swing_scan.build_queue(**params(tmp_path))
+    assert all(r["earnings_verification"]=="NOT_CAPTURED_FOR_NEXT_SESSION" for r in result["candidates"])
+    assert all(r["earnings_preview"]["source"].endswith("PREVIEW_ONLY") for r in result["candidates"])
+    assert result["model_calls"] == result["paper_orders"] == 0
+
+
+def test_earnings_preview_uses_next_business_weekday_not_friday_close():
+    now=datetime(2026,10,30,18,10,tzinfo=NY)
+    event=earnings("AAA","2026-10-30",now)
+    event.next_earnings_date="2026-11-08"
+    preview,reason=swing_scan._earnings_preview(event,"2026-10-30",now,
+                                                 now+timedelta(minutes=1))
+    assert preview is None and reason=="earnings_blackout_preview"
+    assert swing_scan._next_weekday("2026-10-30")=="2026-11-02"
+
+
+def test_future_dated_earnings_preview_is_rejected():
+    now=clock()
+    event=earnings("AAA",ASOF,now)
+    event.observed_at_utc=(now+timedelta(hours=2)).astimezone(timezone.utc).isoformat()
+    preview,reason=swing_scan._earnings_preview(event,ASOF,now,
+                                                 now+timedelta(minutes=1))
+    assert preview is None and reason=="invalid_earnings_preview_provenance"
