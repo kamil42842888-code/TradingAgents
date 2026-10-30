@@ -180,6 +180,31 @@ def read(path: Path = STATE) -> V3State:
     # hash chain before allowing ANY subsequent simulated entry or mark.
     root = path.parent / "market_evidence"
     for item in result.audit:
+        if item["kind"] == "OBSERVER_SOURCE_BOUND":
+            details = item.get("details")
+            if not isinstance(details, dict):
+                raise ValueError("Bound observer evidence details missing")
+            day = details.get("date")
+            if not isinstance(day, str) or not re.fullmatch(r"\\d{4}-\\d{2}-\\d{2}", day):
+                raise ValueError("Bound observer evidence session missing")
+            digests = {
+                "market.json": details.get("market_sha256"),
+                "preopen.json": details.get("preopen_sha256"),
+                "preclose.json": details.get("preclose_sha256"),
+            }
+            for filename, expected in digests.items():
+                if not isinstance(expected, str) or not re.fullmatch(r"[0-9a-f]{64}", expected):
+                    raise ValueError("Bound observer evidence hash missing")
+                archived = path.parent / "observer_sources" / day / filename
+                if (archived.is_symlink() or not archived.is_file() or
+                        hashlib.sha256(archived.read_bytes()).hexdigest() != expected):
+                    raise ValueError("Bound observer evidence changed or missing")
+                if filename != "market.json":
+                    canonical = path.parent / "calendar" / day / filename
+                    if (canonical.is_symlink() or not canonical.is_file() or
+                            hashlib.sha256(canonical.read_bytes()).hexdigest() != expected):
+                        raise ValueError("Bound paper earnings calendar changed or missing")
+            continue
         if item["kind"] != "SESSION_MARKED":
             continue
         details = item["details"]
