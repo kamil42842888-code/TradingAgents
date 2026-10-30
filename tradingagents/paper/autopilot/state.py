@@ -185,7 +185,7 @@ def read(path: Path = STATE) -> V3State:
             if not isinstance(details, dict):
                 raise ValueError("Bound observer evidence details missing")
             day = details.get("date")
-            if not isinstance(day, str) or not re.fullmatch(r"\\d{4}-\\d{2}-\\d{2}", day):
+            if not isinstance(day, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", day):
                 raise ValueError("Bound observer evidence session missing")
             digests = {
                 "market.json": details.get("market_sha256"),
