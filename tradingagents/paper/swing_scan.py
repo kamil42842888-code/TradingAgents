@@ -124,10 +124,57 @@ def _profile_eligible(raw: object, rules: ScreeningRules) -> tuple[dict | None, 
     return {"market_cap_usd": int(cap), "sector": sector.strip()}, "accepted"
 
 
+def _next_weekday(session: str) -> str:
+    """Earliest weekday research window, NOT an exchange-holiday certificate."""
+    day = date.fromisoformat(session) + timedelta(days=1)
+    while day.weekday() >= 5:
+        day += timedelta(days=1)
+    return day.isoformat()
+
+
+def _earnings_preview(observation: object, session: str, requested_at: datetime,
+                      checked_at: datetime) -> tuple[dict | None, str]:
+    """Prior-session secondary-vendor *selection filter*, never trade evidence.
+
+    The actual future session must independently collect immutable preopen and
+    preclose snapshots. A current Yahoo/Nasdaq preview cannot authorise entries.
+    """
+    if (getattr(observation, "asof_date", None) != session or
+            getattr(observation, "verified", None) is not True or
+            getattr(observation, "source", None) != "YAHOO+NASDAQ_CONSENSUS_SECONDARY"):
+        return None, "unverified_secondary_earnings_preview"
+    try:
+        day = date.fromisoformat(session)
+        effective = date.fromisoformat(_next_weekday(session))
+        last = date.fromisoformat(observation.last_earnings_date)
+        nxt = date.fromisoformat(observation.next_earnings_date)
+        observed = datetime.fromisoformat(observation.observed_at_utc)
+        if (observed.tzinfo is None or observed.utcoffset() != timedelta(0) or
+                observed.astimezone(timezone.utc) < requested_at.astimezone(timezone.utc) - timedelta(minutes=2) or
+                observed.astimezone(timezone.utc) > checked_at.astimezone(timezone.utc) or
+                last >= nxt or last > day or nxt <= day):
+            return None, "invalid_earnings_preview_provenance"
+        if (nxt - effective).days <= 7 or (effective - last).days <= 2:
+            return None, "earnings_blackout_preview"
+    except (AttributeError, TypeError, ValueError, OverflowError):
+        return None, "invalid_earnings_preview_provenance"
+    return {
+        "source": "YAHOO+NASDAQ_CONSENSUS_SECONDARY_PREVIEW_ONLY",
+        "asof": session,
+        "earliest_next_weekday": effective.isoformat(),
+        "next_weekday_is_not_holiday_certified": True,
+        "last_earnings_date": last.isoformat(),
+        "next_earnings_date": nxt.isoformat(),
+        "observed_at_utc": observed.isoformat(),
+        "warning": "NOT future-session approval; reobserve earnings preopen and preclose",
+    }, "accepted"
+
+
 def build_queue(*, home: Path = HOME, now: datetime | None = None,
                 max_symbols: int = 600, max_profiles: int = 40,
                 shortlist_size: int = 8, universe_csv: Path | None = None,
                 universe_source=None, price_source=None, profile_source=None,
+                earnings_source=None, max_earnings_checks: int = 40,
                 completion_clock=None) -> dict:
     """Build one immutable completed-NY-session candidate queue, no orders.
 
@@ -137,7 +184,8 @@ def build_queue(*, home: Path = HOME, now: datetime | None = None,
     """
     if (type(max_symbols) is not int or not 0 <= max_symbols <= 12000 or
             type(max_profiles) is not int or not 1 <= max_profiles <= 200 or
-            type(shortlist_size) is not int or not 1 <= shortlist_size <= 8):
+            type(shortlist_size) is not int or not 1 <= shortlist_size <= 8 or
+            type(max_earnings_checks) is not int or not 1 <= max_earnings_checks <= 80):
         raise ValueError("Invalid bounded Swing Alpha scanning parameters")
     current = now if now is not None else datetime.now(timezone.utc)
     if current.tzinfo is None or current.utcoffset() is None:
@@ -175,6 +223,9 @@ def build_queue(*, home: Path = HOME, now: datetime | None = None,
         profile_source = lambda ticker: get_yahoo_ticker(ticker.replace(".", "-")).info
     clock = completion_clock or (lambda: datetime.now(timezone.utc))
     profiles_checked = 0
+    earnings_checked = 0
+    earnings_ok = 0
+    earnings_fn = earnings_source or feeds.earnings_for
     for row in ordered[:max_profiles]:
         profiles_checked += 1
         try:
@@ -187,7 +238,23 @@ def build_queue(*, home: Path = HOME, now: datetime | None = None,
         if by_sector[profile["sector"]] >= 2:
             exclude["sector_diversification_cap"] += 1
             continue
-        observed = clock()
+        if earnings_checked >= max_earnings_checks:
+            exclude["earnings_preview_budget_exhausted"] += 1
+            break
+        earnings_checked += 1
+        try:
+            snapshot = earnings_fn(row["ticker"], session, current)
+            observed = clock()
+            if observed.tzinfo is None or observed.utcoffset() is None:
+                raise ValueError("Preview collection completion clock must be timezone aware")
+            preview, reason = _earnings_preview(snapshot, session, current, observed)
+        except Exception as exc:
+            preview, reason = None, "earnings_preview_source_failed_" + type(exc).__name__
+        if preview is None:
+            exclude[reason] += 1
+            continue
+        earnings_ok += 1
+        if observed.tzinfo is None or observed.utcoffset() is None:
         if observed.tzinfo is None or observed.utcoffset() is None:
             raise ValueError("Profile collection completion clock must be timezone aware")
         if observed.astimezone(timezone.utc) < current.astimezone(timezone.utc):
@@ -196,6 +263,7 @@ def build_queue(*, home: Path = HOME, now: datetime | None = None,
             **row, **profile,
             "profile_observed_utc": observed.astimezone(timezone.utc).isoformat(),
             "earnings_verification": "NOT_CAPTURED_FOR_NEXT_SESSION",
+            "earnings_preview": preview,
             "execution_authority": "NONE_RESEARCH_ONLY",
         })
         by_sector[profile["sector"]] += 1
@@ -217,18 +285,23 @@ def build_queue(*, home: Path = HOME, now: datetime | None = None,
         "source_limitations": (
             "Vendor listings and prices are not exchange-certified historical PIT data. "
             "Market caps and financial currency are vendor snapshots, not issuer filings. "
-            "No earnings source for a newly chosen ticker is inferred or backdated."
+            "Prior-session secondary-calendar previews are not future-session earnings approval."
         ),
         "session": session,
         "scan_started_utc": current.astimezone(timezone.utc).isoformat(),
         "generated_utc": finished.astimezone(timezone.utc).isoformat(),
         "listing_universe_total": len(set(names)),
+        "earliest_next_weekday": _next_weekday(session),
+        "next_weekday_is_not_holiday_certified": True,
         "listing_sha256": hashlib.sha256("\n".join(sorted(set(names))).encode()).hexdigest(),
         "screened_requested": len(chosen),
         "price_screen_accepted": len(ordered),
         "price_vendor_responses": len(returned),
         "price_source_coverage_fraction": round(len(returned) / len(chosen), 5),
         "profiles_considered": profiles_checked,
+        "earnings_preview_checks": earnings_checked,
+        "earnings_preview_accepted": earnings_ok,
+        "earnings_preview_policy": "TWO_SECONDARY_CONSENSUS_PREVIEW_NOT_NEXT_SESSION_AUTHORITY",
         "selection_rotates_by_session": bool(max_symbols and len(chosen) < len(set(names))),
         "complete_daily_universe_coverage": len(chosen) == len(set(names)),
         "screening_exclusions": dict(sorted(exclude.items())),
@@ -249,6 +322,8 @@ def build_queue(*, home: Path = HOME, now: datetime | None = None,
     # universe; persist audit only if the selection was actually possible.
     if not ordered:
         raise ValueError("No eligible completed-session price series; source or coverage failure")
+    if not shortlist:
+        raise ValueError("No candidates passed the earnings-preview screen; fail closed")
     target.parent.mkdir(parents=True, exist_ok=True)
     payload = (json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n").encode()
     fd, temp_path = tempfile.mkstemp(prefix=".swing-scan-", suffix=".tmp", dir=target.parent)
@@ -276,11 +351,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--top", type=int, default=8)
     parser.add_argument("--home", type=Path, default=HOME)
     parser.add_argument("--universe-csv", type=Path)
+    parser.add_argument("--max-earnings-checks", type=int, default=40)
     args = parser.parse_args(argv)
     try:
         result = build_queue(home=args.home, max_symbols=args.max_symbols,
                              max_profiles=args.max_profiles, shortlist_size=args.top,
-                             universe_csv=args.universe_csv)
+                             universe_csv=args.universe_csv,
+                             max_earnings_checks=args.max_earnings_checks)
     except (OSError, ValueError, RuntimeError, TypeError) as exc:
         print(f"SWING UNIVERSE BLOCKED: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 2
