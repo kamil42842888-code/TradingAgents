@@ -255,7 +255,6 @@ def build_queue(*, home: Path = HOME, now: datetime | None = None,
             continue
         earnings_ok += 1
         if observed.tzinfo is None or observed.utcoffset() is None:
-        if observed.tzinfo is None or observed.utcoffset() is None:
             raise ValueError("Profile collection completion clock must be timezone aware")
         if observed.astimezone(timezone.utc) < current.astimezone(timezone.utc):
             raise ValueError("Profile timestamp precedes scan start")
