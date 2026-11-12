@@ -61,7 +61,7 @@ include = ["tradingagents*", "cli*"]
 
 [tool.setuptools.package-data]
 cli = ["static/*"]
-tradingagents = ["assets/*.svg", "paper/web/*.html", "paper/web/*.css", "paper/web/*.js"]
+tradingagents = ["assets/*.svg", "paper/web/*.html", "paper/web/*.css", "paper/web/*.js", "paper/autopilot/daily_sessions.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
