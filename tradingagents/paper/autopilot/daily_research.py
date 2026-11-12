@@ -25,6 +25,9 @@ class RequestBudget:
         self.path = path
         self.lock = threading.RLock()
         self.blocked = False
+        self.plan_config = (
+            dict(config) if config.get("model_billing_mode") == "chatgpt_plan_only" else None
+        )
         self.policy = {
             k: config[k]
             for k in (
@@ -34,6 +37,8 @@ class RequestBudget:
                 "max_prompt_bytes_per_request",
             )
         }
+        if self.plan_config:
+            self.policy["model_billing_mode"] = "chatgpt_plan_only"
         if path.exists():
             self.data = support.read_json(path)
             if (
@@ -61,9 +66,15 @@ class RequestBudget:
                 raise BudgetStop("Invalid persisted request reservation")
             if record.get("reservation_exceeded"):
                 self.blocked = True
+            if self.plan_config and record.get("status") != "COMPLETE_WITH_USAGE":
+                self.blocked = True
 
     def reserve(self, run_id: str, prompt_bytes: int):
         with self.lock:
+            if self.plan_config:
+                from .daily_plan import check_binding
+
+                check_binding(self.plan_config)
             key = str(run_id)
             if self.blocked:
                 raise BudgetStop("Daily model budget is already stopped")
@@ -81,6 +92,11 @@ class RequestBudget:
             ):
                 self.blocked = True
                 raise BudgetStop("Daily model request/token admission limit reached")
+            if self.plan_config:
+                # Subscription inference rejects a server output cap. Reserve all
+                # remaining units until completed, reported usage refunds them.
+                # Unknown/interrupted usage stops the day, including after restart.
+                units = self.policy["max_reserved_tokens_per_session"] - used
             records[key] = {
                 "charged_units": units,
                 "reserved_units": units,
@@ -103,6 +119,8 @@ class RequestBudget:
                     item["reservation_exceeded"] = True
             else:
                 item["status"] = "COMPLETE_USAGE_UNKNOWN_RESERVATION_RETAINED"
+                if self.plan_config:
+                    self.blocked = True
             support.atomic_json(self.path, self.data)
 
     def summary(self):
@@ -112,6 +130,8 @@ class RequestBudget:
             "charged_token_units": sum(x["charged_units"] for x in values),
             "budget_stopped": self.blocked,
             "monetary_cap_enforced": False,
+            "billing_mode": "chatgpt_plan_only" if self.plan_config else "provider_api",
+            "server_output_cap_enforced": not bool(self.plan_config),
         }
 
 
@@ -129,6 +149,15 @@ def model_callback(budget: RequestBudget):
             budget.reserve(str(run_id), len(str(prompts).encode("utf-8")))
 
         def on_llm_end(self, response, *, run_id, **kwargs):
+            if budget.plan_config:
+                messages = [
+                    g.message for batch in getattr(response, "generations", []) for g in batch
+                ]
+                if not messages or any(
+                    m.response_metadata.get("status") != "completed" for m in messages
+                ):
+                    budget.finish(str(run_id), None)
+                    raise BudgetStop("ChatGPT stream did not confirm completed inference")
             usage = None
             info = getattr(response, "llm_output", None) or {}
             raw = info.get("token_usage") or info.get("usage") or {}
@@ -144,6 +173,8 @@ def model_callback(budget: RequestBudget):
                 if totals:
                     usage = sum(totals)
             budget.finish(str(run_id), usage)
+            if budget.plan_config and budget.blocked:
+                raise BudgetStop("ChatGPT usage unknown or daily token allowance exceeded")
 
         def on_llm_error(self, error, *, run_id, **kwargs):
             # The request may have been billed. No refund or automatic retry.
@@ -160,9 +191,14 @@ def guarded_graph(root: Path, config: dict, guard: RequestBudget):
     # Re-read environment after the supervisor loads the project .env; do not
     # copy/import credentials into the deployment package or operation logs.
     cfg = build_default_config()
+    plan_only = config.get("model_billing_mode") == "chatgpt_plan_only"
+    if plan_only:
+        from .daily_plan import check_route
+
+        check_route(config, cfg)
     cfg["results_dir"] = str(root / "agent_results")
     cfg["memory_log_path"] = str(root / "memory.md")
-    cfg["max_tokens"] = config["max_output_tokens_per_request"]
+    cfg["max_tokens"] = None if plan_only else config["max_output_tokens_per_request"]
     cfg["llm_max_retries"] = 0
     cfg["checkpoint_enabled"] = False  # durable controller receipt owns retries
     callback = model_callback(guard)
@@ -172,6 +208,21 @@ def guarded_graph(root: Path, config: dict, guard: RequestBudget):
         if not isinstance(callbacks, list) or callback not in callbacks:
             raise BudgetStop("Provider model did not retain request-admission guard")
         cap = getattr(model, "max_tokens", None) or getattr(model, "max_output_tokens", None)
+        if plan_only:
+            from tradingagents.llm_clients.openai_client import ChatGPTPlanChatOpenAI
+
+            if (
+                not isinstance(model, ChatGPTPlanChatOpenAI)
+                or model.openai_api_base != "https://api.openai.com/v1"
+                or not callable(model.openai_api_key)
+                or not model.streaming
+                or model.store is not False
+                or not model.use_responses_api
+                or cap is not None
+                or model.max_retries != 0
+            ):
+                raise BudgetStop("Provider did not retain subscription-only transport")
+            continue
         if (
             cap != config["max_output_tokens_per_request"]
             or getattr(model, "max_retries", None) != 0

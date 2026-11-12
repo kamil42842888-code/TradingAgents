@@ -3,7 +3,9 @@ param(
     [ValidateSet('Inspect', 'Register', 'Probe', 'Activate', 'Disarm')]
     [string]$Mode = 'Inspect',
     [string]$Project = $PSScriptRoot,
-    [switch]$AcceptModelCharges
+    [switch]$AcceptModelCharges,
+    [switch]$ChatGPTPlanOnly,
+    [switch]$ConfirmPaidCreditsDisabled
 )
 $ErrorActionPreference = 'Stop'
 $Project = (Resolve-Path -LiteralPath $Project).Path
@@ -142,7 +144,8 @@ if ($Mode -eq 'Probe') {
     exit 0
 }
 if ($Mode -eq 'Activate') {
-    if (-not $AcceptModelCharges) { throw 'Explicit -AcceptModelCharges required for final activation' }
+    if ([bool]$AcceptModelCharges -eq [bool]$ChatGPTPlanOnly) { throw 'Choose -ChatGPTPlanOnly or explicit -AcceptModelCharges' }
+    if ($ChatGPTPlanOnly -and -not $ConfirmPaidCreditsDisabled) { throw 'Confirm paid-credit use is disabled in ChatGPT first' }
     Assert-Disarmed
     Assert-Stopped
     foreach ($definition in $definitions) {
@@ -150,7 +153,11 @@ if ($Mode -eq 'Activate') {
         if ($null -eq $task -or $task.Principal.LogonType -ne 'Interactive' -or $task.Settings.MultipleInstances -ne 'IgnoreNew' -or -not $task.Settings.WakeToRun) { throw 'Task configuration failed activation gate' }
     }
     try {
-        Invoke-Runtime -RuntimeArgs @('--activate', '--accept-model-charges')
+        if ($ChatGPTPlanOnly) {
+            Invoke-Runtime -RuntimeArgs @('--activate', '--chatgpt-plan-only', '--confirm-paid-credits-disabled')
+        } else {
+            Invoke-Runtime -RuntimeArgs @('--activate', '--accept-model-charges')
+        }
         foreach ($definition in $definitions) { Enable-ScheduledTask -InputObject (Get-OwnedTask $definition) | Out-Null }
     } catch {
         foreach ($definition in $definitions) { Disable-ScheduledTask -InputObject (Get-OwnedTask $definition) | Out-Null }

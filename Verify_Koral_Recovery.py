@@ -19,6 +19,7 @@ TESTS = [
     "tests/test_daily_paper_integration.py",
     "tests/test_recovery_release.py",
     "tests/test_daily_supervisor_release.py",
+    "tests/test_daily_plan.py",
 ]
 
 

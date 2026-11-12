@@ -31,6 +31,9 @@ DEFAULTS = {
     "scan_max_symbols": 600,
     "scan_max_profiles": 80,
     "scan_max_earnings_checks": 80,
+    "model_billing_mode": "provider_api",
+    "chatgpt_credits_disabled_confirmed_at": None,
+    "chatgpt_account_sha256": None,
     "billing_note": "Request/token admission limits, NOT a guaranteed GBP/USD invoice cap",
 }
 
@@ -172,6 +175,14 @@ def between(previous: str, current: str) -> list[str]:
 
 
 def validate_config(data: dict) -> dict:
+    added = {
+        "model_billing_mode",
+        "chatgpt_credits_disabled_confirmed_at",
+        "chatgpt_account_sha256",
+    }
+    # Read the previous release without rewriting private configuration.
+    if isinstance(data, dict) and set(data) == set(DEFAULTS) - added:
+        data = {**DEFAULTS, **data}
     if not isinstance(data, dict) or set(data) != set(DEFAULTS) or data.get("schema") != SCHEMA:
         raise ValueError("Daily-controller configuration schema mismatch")
     if data["effective_session"] is not None and not is_session(data["effective_session"]):
@@ -193,6 +204,14 @@ def validate_config(data: dict) -> dict:
             raise ValueError("Invalid bounded setting: " + key)
     if data["billing_note"] != DEFAULTS["billing_note"]:
         raise ValueError("Billing limits must not claim a monetary guarantee")
+    if data["model_billing_mode"] not in {"provider_api", "chatgpt_plan_only"}:
+        raise ValueError("Unknown model billing mode")
+    if data["model_billing_mode"] == "chatgpt_plan_only":
+        utc(data["chatgpt_credits_disabled_confirmed_at"])
+        if not re.fullmatch(r"[0-9a-f]{64}", data["chatgpt_account_sha256"] or ""):
+            raise ValueError("ChatGPT plan approval must be bound to a saved sign-in")
+    elif any(data[k] is not None for k in added - {"model_billing_mode"}):
+        raise ValueError("ChatGPT plan approval cannot authorise API billing")
     return dict(data)
 
 

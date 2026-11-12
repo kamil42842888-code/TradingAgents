@@ -36,16 +36,25 @@
     "KE_DAILY_PAPER.py": [
       "6fb390c988bb9bf88c690cfe8101f3fa79575aa0a81bc361b0c7e31acbd236b2",
       "86b262ce50cae8a86f42533e76dd5bf55f7afb3b42711f191af3201b83d28728",
-      "1703a8ebbfd1941ce79311aa7a42d92a480d3134cce3f0d8bcb5826f34a5c402"
+      "1703a8ebbfd1941ce79311aa7a42d92a480d3134cce3f0d8bcb5826f34a5c402",
+      "c1940ad06221b97ec499e169ecb5e0039998d05c91fbb237d40becf2535ca2e9"
     ],
     "KE_Observer_Scheduler_2026-10-26.py": [
       "3b29aefe874b4bb366d30fa0c351d420ac7a3d7153c064f8a0570dab476be4d8",
       "b51f51f439c0bd5b15f28d708eec9bb29d57827b92a714dd17c5df3ea76f6144",
       "f7e6c25a4b8ba872d88d3dc2354f875066ee4ea2a0d77815c24a762c5cb9dacd",
-      "c301256cf802e35909bfe98aa643194714d6d5cc5acf7ab54836099a6ce65290"
+      "c301256cf802e35909bfe98aa643194714d6d5cc5acf7ab54836099a6ce65290",
+      "14f5b6486ca10cc2c090ced6c1f01673abe0af1c2d7b0e0856036bfc38ef3fc0"
     ],
     "MANIFEST.json": [
       "242eee1f9c0dd43f4b483e4af0b83e3e239a2db8134f233d72647195da58add6"
+    ],
+    "Register_Koral_Tasks.ps1": [
+      "527c4cf8fce7ea8f782e797647e66f79f594c2dad4e3e142660834576a2e4da4"
+    ],
+    "Verify_Koral_Recovery.py": [
+      "3cf33fb7a0cd40bf3e46c31745ee0003efeb40a95c7974ded9b17637df870eaf",
+      "b26ba9777064a22414d4c5a706c54b2f3ae2285ef91e4f8602e1c2c0993d1089"
     ],
     "ke_daily_tasks.py": [
       "915cb83ca21d3d0ca1ec5f2582257f844dfdc3f02285c7dc15cc00240717c002"
@@ -53,18 +62,285 @@
     "tests/test_daily_paper_integration.py": [
       "86e2abf4903231472734c3dfea576ebf7b5fb71c13a694a9a848ccc980ac44f2"
     ],
+    "tests/test_daily_supervisor_release.py": [
+      "2fcb009d9c173097b8a105132a5c86480ffb20461656459b8e64d314904b299f"
+    ],
     "tests/test_daily_support.py": [
       "21708f9f7f54b140806c86f02386d81089524feb6fb26460a7638543d923acee"
     ],
     "tests/test_daily_tasks.py": [
       "149e49107f803bf2b0e25520a61d04dba24b98d094196d120b7b9b570fd10088"
     ],
+    "tests/test_recovery_release.py": [
+      "ec7b2300bc931c16dd88b85390f8bcab924fcb58e81e0be5e482bded4ce2a2a4"
+    ],
+    "tools/recovery/restore_sources.py": [
+      "59f19991c4514aab52cb85794670de19029166999f697eb81b16ce3cb790386d",
+      "26f967e058c0636c248aa65be57586ed1cd407690a06c75face5c3e9283fc62a"
+    ],
+    "tradingagents/__init__.py": [
+      "8ff5684c16b40c7ad7794192378b35d45b41e0a86e07fee10cd24aef998bf0ed"
+    ],
+    "tradingagents/agents/__init__.py": [
+      "678113367f806b26a26ff36054ad866d0d9315073564ba06a8d61fd08ffaf9fb"
+    ],
+    "tradingagents/agents/analysts/__init__.py": [
+      "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    ],
+    "tradingagents/agents/analysts/fundamentals_analyst.py": [
+      "daa6deb211ffea262da168a935464080cd75e61815d164502d6466dbd60845b4"
+    ],
+    "tradingagents/agents/analysts/market_analyst.py": [
+      "b9b1562d0c5beafd578380aa5b60534da7601b640b7e8d8869363d309ac0b066"
+    ],
+    "tradingagents/agents/analysts/news_analyst.py": [
+      "fbc22552cd6ae0306ef66a891fb7f7ca5de4f528f12402ebab3c68d2c8c58cba"
+    ],
+    "tradingagents/agents/analysts/sentiment_analyst.py": [
+      "120743700e4e9eb718b868b0e0c702c47e142c845e784f8ebb535e2d409263df"
+    ],
+    "tradingagents/agents/analysts/turn.py": [
+      "94fa951444f53fc3923e5100c1468c10f179eb4c22acc6f59a4351f1c2b8b484"
+    ],
+    "tradingagents/agents/context.py": [
+      "b039623a86856206ce397fcbafd8ef0d9de161d6042772bea2dfc6fec95233dd"
+    ],
+    "tradingagents/agents/managers/__init__.py": [
+      "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    ],
+    "tradingagents/agents/managers/portfolio_manager.py": [
+      "a6c62bf32a99003109179d645b2d98eee66090b5a6453ceb53a475f5bf900bba"
+    ],
+    "tradingagents/agents/managers/research_manager.py": [
+      "60386f2afe3e4b7411b68d8e67a83a6b899ba8aa61a2bec5e9d080feb731c1f7"
+    ],
+    "tradingagents/agents/post_screen.py": [
+      "1aa4ada438d9ffeb817b4fb0067bbd46d730e736b00e8640446da483f8be73a9"
+    ],
+    "tradingagents/agents/rating.py": [
+      "90ab5951c3438ba8d9f7536a80c6b5824a6b56ae5cda83f31ada1be311866a52"
+    ],
+    "tradingagents/agents/researchers/__init__.py": [
+      "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    ],
+    "tradingagents/agents/researchers/bear_researcher.py": [
+      "112e9355e59acfe146b19f0c72d320ea487390b7dcbc711c953844966ba86f58"
+    ],
+    "tradingagents/agents/researchers/bull_researcher.py": [
+      "46783042b021db22e0586caacfbdd6f2dde42c74e4ef51c15420cb9192ee3350"
+    ],
+    "tradingagents/agents/risk_mgmt/__init__.py": [
+      "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    ],
+    "tradingagents/agents/risk_mgmt/aggressive_debator.py": [
+      "f2ddbc28dbeb2786f4c1dcf0c1ef3a54b564fbf118ca14e6a72a3259870b6113"
+    ],
+    "tradingagents/agents/risk_mgmt/conservative_debator.py": [
+      "a1d688a37b05cf12a8e16aa51cafffe39594a50e1b49c225e5de564fb5254639"
+    ],
+    "tradingagents/agents/risk_mgmt/neutral_debator.py": [
+      "30dfd1b81bff24f8053a9583e6cc4411e3e3d3fdb94b32de10a42df753dc27e1"
+    ],
+    "tradingagents/agents/schemas.py": [
+      "782b842c2ef030f690219385364ea2a3a58d98ff6478c62050f5d86a25127534"
+    ],
+    "tradingagents/agents/state.py": [
+      "6b665f8c3758adb6efebaf5ca5f01e375657ba7386ec9805607ceb2080b25e27"
+    ],
+    "tradingagents/agents/structured.py": [
+      "66bc812c51a11a696b84b6c3b3fe529a4aeb0a69ede8c3137f38ae9278bd830a"
+    ],
+    "tradingagents/agents/tools.py": [
+      "34172e04bb247923eef29620032b8e62bc1791a5b802637e46ed4cc0b5220837"
+    ],
+    "tradingagents/agents/trader/__init__.py": [
+      "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    ],
+    "tradingagents/agents/trader/trader.py": [
+      "ce2ee336dc21a5cd59215a7944ab0a701e633c40478598f0416bee95d01c3cef"
+    ],
+    "tradingagents/backtest.py": [
+      "c25623d2acb22ff2bd0c144305c099b5858ba7dbf250e7c636a009109b2b805f"
+    ],
+    "tradingagents/dataflows/__init__.py": [
+      "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    ],
+    "tradingagents/dataflows/config.py": [
+      "0158c7a3bf506eb8d633896632858eb086ecbd063c78344b58f145201928314f"
+    ],
+    "tradingagents/dataflows/date_window.py": [
+      "e2668904533e9ec0bfcf9dd7fd5adba7508d9597b4e85982625c819c2407072a"
+    ],
+    "tradingagents/dataflows/errors.py": [
+      "ceaff104123ac2a55b50635f27d39f80b6455c74617f67f7f54d908e00477b13"
+    ],
+    "tradingagents/dataflows/files.py": [
+      "dbeea3f16d2424678b664fb39ac484718fc6e452607bd6d0b3625943d755ebe1"
+    ],
+    "tradingagents/dataflows/net.py": [
+      "f7d9945e487c300867d111310e10316063cb0cac95a764ad4140d77d89a52b76"
+    ],
+    "tradingagents/dataflows/router.py": [
+      "1956d24f0f0bac0da044251e14a6f4a038d748fd8dbe9f9806365fd097a49ea9"
+    ],
+    "tradingagents/dataflows/symbols.py": [
+      "15335e01f1532ea51e12f6ace2d0bec3058d6975eac93bed5ed07f2d4e550528"
+    ],
+    "tradingagents/dataflows/vendor_gateway.py": [
+      "cc51d5045323103e905d3eae5724c292c3a471c01c3e370958b1c70fb0cc2ca2"
+    ],
+    "tradingagents/dataflows/vendors/__init__.py": [
+      "a867066a8b045938c175d598c2a5108275a8c825cc6d939d990aa9d053d79b8e"
+    ],
+    "tradingagents/dataflows/vendors/alpha_vantage/__init__.py": [
+      "1e21b5bae37737cba9e0c2e87132487332275a38b925f6fabc868e7b9d41f7d1"
+    ],
+    "tradingagents/dataflows/vendors/alpha_vantage/common.py": [
+      "225c2651a636c4a6b0733cd3a66feacaff1732fce7b2f512a16140bd483bd82a"
+    ],
+    "tradingagents/dataflows/vendors/alpha_vantage/fundamentals.py": [
+      "e7ecb7f3af77dd78ca8d334e925af3325d1cb06a20eae6e1c1be03740b781b66"
+    ],
+    "tradingagents/dataflows/vendors/alpha_vantage/indicator.py": [
+      "d5f8ccc72aff89559611febf7eb543d54b6efb303d270049f300fcd5e0bf756b"
+    ],
+    "tradingagents/dataflows/vendors/alpha_vantage/news.py": [
+      "5aa9639cba6735d52cb02f14ccce3e78e42b0f287b1d9333fe5142cb4da66fc6"
+    ],
+    "tradingagents/dataflows/vendors/alpha_vantage/stock.py": [
+      "17633620192f0005f58de3f7dc1671ac3ee8b7d96cf20283e74648b70225cd5c"
+    ],
+    "tradingagents/dataflows/vendors/fred.py": [
+      "905ea6412067145a10c71f0e07b83624769d6e3379dd10391a47b045857ef6d7"
+    ],
+    "tradingagents/dataflows/vendors/polymarket.py": [
+      "2a50bbe8dc9daec7a029ed2c024d3a00268ca83cabbfa2271e7e8f5b6633a75c"
+    ],
+    "tradingagents/dataflows/vendors/reddit.py": [
+      "0b7f56fc3c757202cca3fd7cc3ed4390d5d3519fa5be6d7e38fe157c00e3186c"
+    ],
+    "tradingagents/dataflows/vendors/sec_edgar.py": [
+      "0189154cb5c76082e3aca5e0e187c677a857e56bd1a5aee49dddb10f1f989f9c"
+    ],
+    "tradingagents/dataflows/vendors/stocktwits.py": [
+      "675c41346d41cd8e21f283dfaff592ee047f4ac245a3e47a1a709a6073d3006e"
+    ],
+    "tradingagents/dataflows/vendors/yahoo/__init__.py": [
+      "4edf2362854ee40ec5fa7e769d64bde32b7070b42c5dfa2abb728267884d6552"
+    ],
+    "tradingagents/dataflows/vendors/yahoo/common.py": [
+      "6f75f46575fef14ad8fc3212b7c3a8d2ee00d2bd73de9a473c78ce02926e0821"
+    ],
+    "tradingagents/dataflows/vendors/yahoo/fundamentals.py": [
+      "d0f7eb8d3d4e8798bd8c4d47a59299fe8f40479f936aa7c0008f9b8cd9acc7c2"
+    ],
+    "tradingagents/dataflows/vendors/yahoo/market.py": [
+      "7f406c9c5109a4de818a33827bba747673f5e56db62fe4b9b6c88c81b5228979"
+    ],
+    "tradingagents/dataflows/vendors/yahoo/news.py": [
+      "9f56dcc58bae002a4e7c19e0f659504fabfb7132aef535e248bc7d080b30b7eb"
+    ],
+    "tradingagents/dataflows/vendors/yahoo/ohlcv.py": [
+      "0de8de042d903912711fa66e9f6e08d644bc474a54783ebf6ebbfc79892ff77d"
+    ],
+    "tradingagents/dataflows/vendors/yahoo/snapshot.py": [
+      "e84e4049516e88f5dd8eb70540f2356a498532b84cca16fc97e9df478ae58615"
+    ],
+    "tradingagents/default_config.py": [
+      "84576daffd9ab5e59bd5de3f2bdb650f7488a91cdbbd08d24d9dcc35e2c17615"
+    ],
+    "tradingagents/graph/__init__.py": [
+      "3c5ec25eb68097a8ec82ab3e1877d2b028e1aa9c85339e7008b508a5e335210d"
+    ],
+    "tradingagents/graph/analyst_execution.py": [
+      "2cee40303e18c19bf77d36a7f3d91ba431c84dfd53031139dd34411f2c694456"
+    ],
+    "tradingagents/graph/checkpointer.py": [
+      "f1ccb055601a8267f0b136482b06d853bd173a83a63c7d04c30f69ac65f3c295"
+    ],
+    "tradingagents/graph/conditional_logic.py": [
+      "3c9f344071552b95b59e0e78302ba73b77236afc895effcc0007ebf3eea4a3e3"
+    ],
+    "tradingagents/graph/propagation.py": [
+      "49519fc3726d096fa1746e085537d886c27da633835cd693c097595ceb4c55b6"
+    ],
+    "tradingagents/graph/setup.py": [
+      "a2790ebd549ff082e114b43201997ac29b7e58d00e643536d4ced8e949c855be"
+    ],
+    "tradingagents/graph/trading_graph.py": [
+      "7cbd1602cd30026b7ced30fcd1478fbaef274466cf710b248f1f2cd701eca020"
+    ],
+    "tradingagents/llm_clients/__init__.py": [
+      "548fda2ec116932a327f7dd9fae96cd9702f64dd872b8026d31635eb8264300c"
+    ],
+    "tradingagents/llm_clients/anthropic_client.py": [
+      "f9ea621a9820737b97bc336d2d67d64c8f66ae730aced02020d0f91cc2f0efaf"
+    ],
+    "tradingagents/llm_clients/api_key_env.py": [
+      "75044997cc0cdebed4df87addc720912c5604919a3d400227798d3df8558fadf"
+    ],
+    "tradingagents/llm_clients/azure_client.py": [
+      "8a269a0243d633631581f3c127885bba9dd2a2afb839dab5d160a1f19ef4058c"
+    ],
+    "tradingagents/llm_clients/base_client.py": [
+      "5af145a100b42e5de2c3baffcde0f3975fd826b14c1659c4ee44a300affa0c38"
+    ],
+    "tradingagents/llm_clients/bedrock_client.py": [
+      "aa279ec2956d1811683ebed4a7267657d53dc0a900c7185a07e2cfab03d9d99a"
+    ],
+    "tradingagents/llm_clients/capabilities.py": [
+      "b9fd431371cc8f70a2ac832adfd73a79c3b5339ad6fd9449641bef24df6ce564"
+    ],
+    "tradingagents/llm_clients/chatgpt_auth.py": [
+      "f83a2878964091e374a3806afbd901efe1cf50c56f1b1e7de06711d64c67bd15"
+    ],
+    "tradingagents/llm_clients/factory.py": [
+      "6b8d11a71733638fb546b29b14966d74f64f7c9bfbc09e600600fb6e789bde33"
+    ],
+    "tradingagents/llm_clients/google_client.py": [
+      "6079f050a8a46cc388e5ce79e1e6f4489f350225838dd5bc17607d549a6d9ea4"
+    ],
+    "tradingagents/llm_clients/model_catalog.py": [
+      "2f617a54fac65b228de8c87a49f609616e3a2b906c51a174516b8d2245c9c7a7"
+    ],
+    "tradingagents/llm_clients/openai_client.py": [
+      "5d4e993ccea48351051d7daeda48ca2756ba12018a65df30c5893afe3b1a2703"
+    ],
+    "tradingagents/llm_clients/validators.py": [
+      "626014bb0d1b78bd2b1fb519c7c93fa243cdaaad0f904044bd6836488607c31c"
+    ],
+    "tradingagents/memory/__init__.py": [
+      "8e56b432cb14a223acd2a831845e79c5e0e978c5e1d561399e0028f0211c8636"
+    ],
+    "tradingagents/memory/log.py": [
+      "7b15db223fa839f09223e9f0fddd95d93fd8eb0dfd6911a218d1bb5b8c06841a"
+    ],
+    "tradingagents/memory/reflection.py": [
+      "f54582a8d1b5df7f2c7b6c9f82ca9ab215986dd2042d59f3955fe7af2cbba8bb"
+    ],
+    "tradingagents/memory/settlement.py": [
+      "809ad32352742834ed1d1a0491dc6046bc1b899dcffd8efddd0a46840a977c0f"
+    ],
+    "tradingagents/paper/__init__.py": [
+      "b73c2c7e84a0170e5f89f5d8c97958bbb051dc39cbbe9da1f7d0f9eaf8093fa6"
+    ],
+    "tradingagents/paper/auto_v3.py": [
+      "163106bbb59fb4c73c0481218180910ccacd1084186cbe3bef10077766b30c7d"
+    ],
+    "tradingagents/paper/autopilot/__init__.py": [
+      "ced1a8063a34c0e56d599f8eee176dcbaefc1e39494a9f3eb6d9320d9b541f79"
+    ],
+    "tradingagents/paper/autopilot/cli.py": [
+      "fe5b86d67bfea7beb7ebbab5dba1bb3ef38ce59b5fe1f7aca540b3f8971f9446"
+    ],
     "tradingagents/paper/autopilot/daily_research.py": [
       "a01519b7dd492ce4c7bc4ac48a9f4b43ce0192eb6c968d1de90e53671eef8921",
-      "cd05e096b9fad4cb3cd373e9572bfc3639dbb49236059cfd7be46aee4560e251"
+      "cd05e096b9fad4cb3cd373e9572bfc3639dbb49236059cfd7be46aee4560e251",
+      "df3a326ceb4fe04cb6c2af773ccd077c8b84728bf59416dc64bc1c525c0b30ae"
     ],
     "tradingagents/paper/autopilot/daily_roster.py": [
-      "048e8b65a79e233c0451abcfa48029d8a3e76c367cf5cdef8896de4f914978d0"
+      "048e8b65a79e233c0451abcfa48029d8a3e76c367cf5cdef8896de4f914978d0",
+      "16703156d0f56a838fd17a8baf49b3d81d6d821328f21087729777b0fb6ab022"
     ],
     "tradingagents/paper/autopilot/daily_sessions.json": [
       "57a36794a0f145618ce0f3bdbb4d38632ecc513e4273a6fe50576a66bad911aa",
@@ -72,47 +348,109 @@
     ],
     "tradingagents/paper/autopilot/daily_supervisor.py": [
       "ec61cfa32e9207815c43cf28dedcafd39d9fcf74c322f149d28f7b761a3f61ac",
-      "7d44befa2dfba2cb2e0489064be63d066d22877885889ad26e8beb95ce05edb9"
+      "7d44befa2dfba2cb2e0489064be63d066d22877885889ad26e8beb95ce05edb9",
+      "35f24a833a6953120372183375445491cf8f0a9d6f2bb7fdb5014b5cc13383aa"
     ],
     "tradingagents/paper/autopilot/daily_support.py": [
       "1039678ed759d8bcfc6e8f6bb497569aa05ce692cbea84a083d016e06c0bc536",
-      "f523d9bdb548fc8502b158a928f71ae160b189ad9985984c81504a674ca38ee3"
+      "f523d9bdb548fc8502b158a928f71ae160b189ad9985984c81504a674ca38ee3",
+      "e5baa2a8ab636e94f207dd104d56da6be02508c75f32ed946266aa8d6420f904"
+    ],
+    "tradingagents/paper/autopilot/daily_transaction.py": [
+      "170cb616e36cc947d9309ccd1f1855d1c477209e3ffd9358032a73c248182ae2",
+      "7421a43dc23efbbe20761bf147465c5087e3900828d1e7138e1fc2a5cd5407bf"
+    ],
+    "tradingagents/paper/autopilot/decision.py": [
+      "9a717aa9c1456d0dc659dea741dfe2229919452f28ecbb1ecb77c1ef430c0755"
+    ],
+    "tradingagents/paper/autopilot/feeds.py": [
+      "e75757389541952dc78dcc48d5132b3dbf1b3ceb4da9a225e2a93ca244680e19",
+      "1c33a9ee75b1b0639dbc66a99de1baa1a7101aa1e20347a1a39041ccc1b85a0e"
+    ],
+    "tradingagents/paper/autopilot/live_dry_run.py": [
+      "bb10d41b5ecf8ffdb568f1a24db7ce16abfea72918905917b8d9777cb02a0f8b",
+      "0f8fea01827e7b569410f356428afc45037f668c6b9d3e121a217584d4c1f3b1"
+    ],
+    "tradingagents/paper/autopilot/observe.py": [
+      "e57d748c5ee1dd931d0c107752a8f233acf4a9551e6f7d86880b54b36b854879"
+    ],
+    "tradingagents/paper/autopilot/observer_lock.py": [
+      "83faf207e2091840880a0f7ca75dbde1c585ec935ae3291fb28de66e5fc78f7c"
     ],
     "tradingagents/paper/autopilot/paper_bridge.py": [
       "43a43e963136d21db92eec9db7fbb325d2a96028b18fe67ffae39f7ef869d56f",
-      "f65585d2cfd6b348e769e9c6145a2310356a125c5b5cff513cd0abc6642eab84"
+      "f65585d2cfd6b348e769e9c6145a2310356a125c5b5cff513cd0abc6642eab84",
+      "96eeeed4eb85f51d8e43f8c9b4108ed773d293bfc6f3ca346391fec1605b7364"
     ],
     "tradingagents/paper/autopilot/paper_forward.py": [
       "fb1de83e867f0f582b958b6dc467a716a2536415033454857df7b29bf8542304",
       "f38a3de21f736566df577df48500827715cd3d34747dd9e4da0841cfb854b93c",
-      "fcb60bb343f31659bac6f67549121d8f03491fe45084ef8b97aaf0d6ef0e476a"
+      "fcb60bb343f31659bac6f67549121d8f03491fe45084ef8b97aaf0d6ef0e476a",
+      "7cb0d5cb157fa09ecbec9761232680bb1ac5d63c0e51aab58e7fc4ce79c4255e"
     ],
-    "Register_Koral_Tasks.ps1": [
-      "527c4cf8fce7ea8f782e797647e66f79f594c2dad4e3e142660834576a2e4da4"
+    "tradingagents/paper/autopilot/performance.py": [
+      "836c0a3e5c87ebacbe05ed92e5ba5511536d1cd9bbc15f5ec63d4e4ce96dcbe4"
     ],
-    "Verify_Koral_Recovery.py": [
-      "3cf33fb7a0cd40bf3e46c31745ee0003efeb40a95c7974ded9b17637df870eaf"
+    "tradingagents/paper/autopilot/preflight_dry_run.py": [
+      "b7cf69618f0edb9a2193dafbf61ba92fb158b16b1a96bf4ef7dd219f39c60a82"
     ],
-    "tests/test_daily_supervisor_release.py": [
-      "2fcb009d9c173097b8a105132a5c86480ffb20461656459b8e64d314904b299f"
-    ],
-    "tests/test_recovery_release.py": [
-      "ec7b2300bc931c16dd88b85390f8bcab924fcb58e81e0be5e482bded4ce2a2a4"
-    ],
-    "tools/recovery/restore_sources.py": [
-      "59f19991c4514aab52cb85794670de19029166999f697eb81b16ce3cb790386d"
-    ],
-    "tradingagents/paper/autopilot/daily_transaction.py": [
-      "170cb616e36cc947d9309ccd1f1855d1c477209e3ffd9358032a73c248182ae2"
-    ],
-    "tradingagents/paper/autopilot/feeds.py": [
-      "e75757389541952dc78dcc48d5132b3dbf1b3ceb4da9a225e2a93ca244680e19"
-    ],
-    "tradingagents/paper/autopilot/live_dry_run.py": [
-      "bb10d41b5ecf8ffdb568f1a24db7ce16abfea72918905917b8d9777cb02a0f8b"
+    "tradingagents/paper/autopilot/rehearsal.py": [
+      "0ebbaeeb4ddd8f74989609d952fb31d927c17286575e12d9f77c1deb7058467e"
     ],
     "tradingagents/paper/autopilot/runner.py": [
-      "eb52477cbf12e86a9b5e35e4112a330ba303dcc36c43fe83a81be335e70a484e"
+      "eb52477cbf12e86a9b5e35e4112a330ba303dcc36c43fe83a81be335e70a484e",
+      "679164cd822b6d45c3c01eb07a88485bd694443004a7f2bef90b94419fb1fd81"
+    ],
+    "tradingagents/paper/autopilot/state.py": [
+      "bb623f4b683263eee9a4e70cb821ba7691ef194721c7242792ba0d688b3cb999"
+    ],
+    "tradingagents/paper/autopilot/verify_dry_run.py": [
+      "44fccb7b9798dd4c9e02b99ab6ef1a67a0f64fa20fd3a8b1dc24362180082476"
+    ],
+    "tradingagents/paper/cli.py": [
+      "5cb37425a0f0e3498ff6d6cf76df851647574ca7bb7f3394729ca4a2c12acc7c"
+    ],
+    "tradingagents/paper/conditional.py": [
+      "8225b0515951ee5ed577ae30c394cebdf86ceec74e81913a789ecb21f3fa1317"
+    ],
+    "tradingagents/paper/conditional_cli.py": [
+      "ebe05f118dc1ee907c8bde9498f36e4ec8bc5812f842489d07fd1b2d5423e953"
+    ],
+    "tradingagents/paper/dashboard.py": [
+      "399b087b3be270cdd854a01071e34b3f5c3b1ac39be470812c8a58bab416334d"
+    ],
+    "tradingagents/paper/discovery.py": [
+      "d53bb25003317d730562c383ed9363f6e21a9853d9b68f2b5c38bf0b79af497a"
+    ],
+    "tradingagents/paper/discovery_web.py": [
+      "d1d0d36cb40eca4afa13eef21c4096bb4bd77db6b20c213a5a40433bd48485aa"
+    ],
+    "tradingagents/paper/engine.py": [
+      "0424b259eefb0a44d6515428cab56045277fd06e2e13726e446259a5602b2067"
+    ],
+    "tradingagents/paper/filings.py": [
+      "d1534834be8025a5bdc88609b2bf9db5df97341523e5a891c7fd6cc270af2637"
+    ],
+    "tradingagents/paper/rebrand_archives.py": [
+      "1f4a6462c5c98a8dd61030dfa082abbece92ab8fb9ffd716cc9f0524ef27edc4"
+    ],
+    "tradingagents/paper/research_screener.py": [
+      "ca39c7544eab20298c0f41abf154f7561fb648b0d53560d15b3e522840d708a2"
+    ],
+    "tradingagents/paper/swing_scan.py": [
+      "217dde01aff96fbb69b1d85820754819a8ba16ae1a09cf35fe1eca4c126d024f"
+    ],
+    "tradingagents/paper/underwriting.py": [
+      "2faa8aac10744e2c338bedc2a3a3febca918748756c36bd4dc9eb3195e4f6f11"
+    ],
+    "tradingagents/portfolio.py": [
+      "59f52f1a0c5402ff1313eef9deae0c378aa3996e23ba202abc983d2cae6b07ed"
+    ],
+    "tradingagents/report_html.py": [
+      "294476810ebdb008fa5e06b3e2489ba01de807c9587b0ae181b657bfedd6e467"
+    ],
+    "tradingagents/reporting.py": [
+      "0cff03b8b241d20a89068f111e196795ac1ce5fd228414a2ca40e6c7b838381b"
     ]
   }
 }

@@ -23,6 +23,8 @@ def main(argv=None):
     group.add_argument("--disarm", action="store_true")
     parser.add_argument("--probe-id")
     parser.add_argument("--accept-model-charges", action="store_true")
+    parser.add_argument("--chatgpt-plan-only", action="store_true")
+    parser.add_argument("--confirm-paid-credits-disabled", action="store_true")
     args = parser.parse_args(argv)
     from tradingagents.paper.autopilot import (
         daily_supervisor as supervisor,
@@ -63,9 +65,11 @@ def main(argv=None):
                 support.atomic_json(support.home() / "config.json", cfg)
             result = {"status": "PAPER_SUPERVISOR_DISARMED", "account_flags_changed": False}
         elif args.activate:
-            if not args.accept_model_charges:
+            if args.accept_model_charges == args.chatgpt_plan_only:
+                raise ValueError("Choose --chatgpt-plan-only or explicit --accept-model-charges")
+            if args.chatgpt_plan_only and not args.confirm_paid_credits_disabled:
                 raise ValueError(
-                    "Activation authorises provider charges; explicit --accept-model-charges required"
+                    "Confirm other apps cannot spend credits in ChatGPT settings first"
                 )
             digest = support.sha((PROJECT / "KE_DAILY_SOURCE_MANIFEST.json").read_bytes())
             for filename, status in [
@@ -78,7 +82,7 @@ def main(argv=None):
                 if proof.get("status") != status or proof.get("manifest_sha256") != digest:
                     raise ValueError("Current source has not passed " + filename)
             with support.os_lock(support.home() / ".supervisor.lock"):
-                result = supervisor.arm(PROJECT)
+                result = supervisor.arm(PROJECT, plan_only=args.chatgpt_plan_only)
         elif args.status:
             result = supervisor.status(PROJECT)
             result["scheduler_status"] = "NOT_INSPECTED_BY_THIS_COMMAND"

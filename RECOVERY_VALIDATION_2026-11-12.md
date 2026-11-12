@@ -8,7 +8,9 @@ not establish genuine unattended forward-paper performance.
 |---|---|
 | Handoff integrity | All 10 nested ZIP/screenshot SHA-256 values match |
 | Focused Windows regression | 224 passed across final core and roster runs; one symlink privilege skip |
-| Installed release suite | 55 passed in 15.15 seconds; temporary accounts, mocked providers |
+| Installed subscription update suite | 71 passed in 39.54 seconds; temporary accounts, mocked providers |
+| Subscription update regression | 90 focused Windows tests passed, including provider, routing and incomplete-stream checks |
+| Real subscription compatibility | Both configured models passed streamed tool round trips; four small requests, 376 reported tokens; no stock research or portfolio writes |
 | Dependency consistency | `pip check`: no broken requirements; pre-existing `~radingagents` metadata warning retained |
 | Changed Python source lint | Ruff 0.17.4: all changed files pass |
 | Full repository lint | 196 findings remain in untouched files; unrelated cleanup excluded |
@@ -16,8 +18,8 @@ not establish genuine unattended forward-paper performance.
 | Account preservation | Original ledger bytes, audit chain and bound evidence verified privately |
 | Windows Task Scheduler | Disabled Observer/controller tasks registered with backups |
 | Actual scheduled launch | Temporary zero-spend probe completed successfully with matching source manifest |
-| Paid models during engineering | None |
-| Final activation | Not performed; separate explicit approval required |
+| API-key model calls during engineering | None |
+| Final activation | Subscription-only mode activated after operator confirmation that external-app paid credits are disabled |
 | Genuine future-session collection/trading | Not yet verified |
 
 Coverage includes interrupted source updates, rollback, unknown edits/locks,
@@ -30,7 +32,15 @@ account marking, roster continuity, holidays, early closes and New York DST.
 The private validation report retains the pre/post ledger hash and account
 values. No account identifiers, balance, audit-event count or account hash are
 published here. Recovery preserves existing account permissions and historical
-decisions; the separate daily controller remains disarmed after verification.
+decisions. The subscription-only update was separately activated after verification.
+The first declared effective session is 2026-11-13; no historical analysis was rerun.
+
+The subscription route pins the operator's credit-setting confirmation to the
+saved sign-in and rejects paid-provider overrides. It requires a completed stream
+and reported usage; unknown/interrupted usage stops the session across restarts.
+No server output-token ceiling exists on this route. The no-extra-charge condition
+depends on keeping external-app paid-credit use disabled in ChatGPT. Its remote
+state was confirmed by the operator, not independently inspected by the program.
 
 Source backups and task XML backups remain inside the existing project's
 `_Koral_Equities_Source_Backups`. No Koral Quant tasks, broker connections,

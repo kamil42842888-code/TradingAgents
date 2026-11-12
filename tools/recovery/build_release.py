@@ -21,6 +21,7 @@ FILES = [
             "daily_support.py",
             "daily_roster.py",
             "daily_research.py",
+            "daily_plan.py",
             "daily_supervisor.py",
             "daily_sessions.json",
             "daily_transaction.py",
@@ -38,6 +39,7 @@ FILES = [
             "test_daily_paper_integration.py",
             "test_recovery_release.py",
             "test_daily_supervisor_release.py",
+            "test_daily_plan.py",
         )
     ],
 ]

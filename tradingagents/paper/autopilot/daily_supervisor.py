@@ -324,7 +324,9 @@ def tick(project: Path, **kwargs) -> dict:
     return result
 
 
-def arm(project: Path, *, now: datetime | None = None, root: Path | None = None) -> dict:
+def arm(
+    project: Path, *, now: datetime | None = None, root: Path | None = None, plan_only: bool = False
+) -> dict:
     """Enable this schedule only; NEVER toggle the underlying paper account."""
     from tradingagents.paper.autopilot.state import STATE, read
 
@@ -342,6 +344,24 @@ def arm(project: Path, *, now: datetime | None = None, root: Path | None = None)
     cfg = s.load_config(root)
     if cfg["armed"]:
         return {"status": "ALREADY_ARMED", "effective_session": cfg["effective_session"]}
+    if plan_only:
+        import tempfile
+
+        from .daily_plan import confirm_config
+        from .daily_research import RequestBudget, guarded_graph
+
+        cfg = confirm_config(cfg)
+        # Build both real provider clients without inference or account writes.
+        # A route/callback/credential mismatch must fail before the schedule arms.
+        with tempfile.TemporaryDirectory(prefix="koral-plan-check-") as scratch:
+            directory = Path(scratch)
+            guarded_graph(directory, cfg, RequestBudget(directory / "budget.json", cfg))
+    else:
+        cfg.update(
+            model_billing_mode="provider_api",
+            chatgpt_credits_disabled_confirmed_at=None,
+            chatgpt_account_sha256=None,
+        )
     cfg.update(armed=True, managed_observer=True, effective_session=effective)
     s.validate_config(cfg)
     # Freeze before writing the armed configuration; failure never arms half a setup.
@@ -354,4 +374,6 @@ def arm(project: Path, *, now: datetime | None = None, root: Path | None = None)
         "paper_account_settings_changed": False,
         "shorts_allowed": False,
         "monetary_invoice_cap": False,
+        "model_billing_mode": cfg["model_billing_mode"],
+        "paid_credits_disabled": "OPERATOR_CONFIRMED_IN_CHATGPT" if plan_only else "NOT_VERIFIED",
     }
