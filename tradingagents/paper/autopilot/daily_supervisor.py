@@ -46,8 +46,13 @@ def check_integrity(project: Path):
     if (project / ".koral-source-transaction.json").exists():
         raise ValueError("Source recovery transaction unfinished; keep tasks disabled")
     manifest = s.read_json(project / "KE_DAILY_SOURCE_MANIFEST.json")
-    if manifest.get("schema") != "koral-daily-installed-sources-v1":
+    if (
+        not isinstance(manifest, dict)
+        or manifest.get("schema") != "koral-daily-installed-sources-v1"
+    ):
         raise ValueError("Missing source-only installation manifest")
+    if not isinstance(manifest.get("sha256"), dict):
+        raise ValueError("Installed source manifest hashes must be an object")
     required = {
         "KE_DAILY_PAPER.py",
         "KE_Observer_Scheduler_2026-10-26.py",
@@ -116,20 +121,16 @@ def scan_for_next_session(project: Path, session: str, root: Path, *, runner=Non
     return record
 
 
-def status(project: Path, root: Path | None = None) -> dict:
-    root = root or s.home()
-    cfg = s.load_config(root)
-    heart = root / "heartbeat.json"
-    result = {
-        "schema": s.SCHEMA,
-        "configuration": cfg,
-        "heartbeat": s.read_json(heart) if heart.exists() else None,
-        "account_changes": 0,
-        "broker_connected": False,
-    }
-    latest = sorted((root / "summaries").glob("*.json")) if (root / "summaries").exists() else []
-    result["latest_session"] = s.read_json(latest[-1]) if latest else None
-    return result
+def status(
+    project: Path,
+    root: Path | None = None,
+    *,
+    now: datetime | None = None,
+    stale_after_minutes: float = 14.0,
+) -> dict:
+    from .daily_health import report
+
+    return report(root or s.home(), now=now, stale_after_minutes=stale_after_minutes)
 
 
 def _tick(
@@ -259,9 +260,8 @@ def _tick(
                         "positions": sorted(state.portfolio.book.positions),
                         "orders": state.portfolio.book.orders,
                         "active_symbols": sorted(s.active_symbols(state)),
-                        "first_processed_utc": prior.get("first_processed_utc")
-                        if prior
-                        else s.utcnow().isoformat(),
+                        "first_processed_utc": (prior or {}).get("first_processed_utc")
+                        or s.utcnow().isoformat(),
                         "monetary_invoice_cap": False,
                     }
                     s.atomic_json(summary_file, summary)

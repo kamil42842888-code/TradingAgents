@@ -25,13 +25,39 @@ def main(argv=None):
     parser.add_argument("--accept-model-charges", action="store_true")
     parser.add_argument("--chatgpt-plan-only", action="store_true")
     parser.add_argument("--confirm-paid-credits-disabled", action="store_true")
+    parser.add_argument("--operations-root", type=Path, help="Read-only --status data directory")
+    parser.add_argument("--as-of", help="Aware ISO timestamp for read-only --status inspection")
     args = parser.parse_args(argv)
+    if (args.operations_root is not None or args.as_of is not None) and not args.status:
+        parser.error("--operations-root and --as-of are only available with --status")
     from tradingagents.paper.autopilot import (
         daily_supervisor as supervisor,
         daily_support as support,
     )
 
     try:
+        # Diagnostics remain available if a migrated installation is incomplete.
+        # Every mutating/executing mode still requires source integrity first.
+        if args.status:
+            integrity = {"status": "VERIFIED"}
+            try:
+                supervisor.check_integrity(PROJECT)
+            except (OSError, ValueError, TypeError, KeyError) as exc:
+                integrity = {
+                    "status": "FAILED",
+                    "error_type": type(exc).__name__,
+                    "message": str(exc)[:800],
+                }
+            result = supervisor.status(
+                PROJECT,
+                root=args.operations_root,
+                now=support.utc(args.as_of) if args.as_of else None,
+            )
+            result["source_integrity"] = integrity
+            result["scheduler_status"] = "NOT_INSPECTED_BY_THIS_COMMAND"
+            result["release"] = "CONTINUATION_2026_11_19_READ_ONLY_STATUS"
+            print(json.dumps(result, indent=2, sort_keys=True, default=str))
+            return 0 if integrity["status"] == "VERIFIED" else 2
         supervisor.check_integrity(PROJECT)
         if args.probe_once:
             import re
@@ -83,10 +109,6 @@ def main(argv=None):
                     raise ValueError("Current source has not passed " + filename)
             with support.os_lock(support.home() / ".supervisor.lock"):
                 result = supervisor.arm(PROJECT, plan_only=args.chatgpt_plan_only)
-        elif args.status:
-            result = supervisor.status(PROJECT)
-            result["scheduler_status"] = "NOT_INSPECTED_BY_THIS_COMMAND"
-            result["release"] = "RECOVERY_2026_11_12_SEPARATE_ACTIVATION"
         else:
             try:
                 from dotenv import load_dotenv

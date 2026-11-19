@@ -20,6 +20,13 @@ TESTS = [
     "tests/test_recovery_release.py",
     "tests/test_daily_supervisor_release.py",
     "tests/test_daily_plan.py",
+    "tests/test_daily_roster_capacity.py",
+    "tests/test_forward_source_continuity.py",
+    "tests/test_daily_health.py",
+    "tests/test_daily_supervisor_progress.py",
+    "tests/test_daily_status_cli.py",
+    "tests/test_windows_task_status.py",
+    "tests/test_recovery_build.py",
 ]
 
 

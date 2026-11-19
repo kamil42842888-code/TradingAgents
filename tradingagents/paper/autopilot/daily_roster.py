@@ -26,10 +26,10 @@ def choose_names(current: list[str], active: set[str], ranked: list[str] | None)
     proposed = s.names(ranked) if ranked else current
     chosen = list(carry)
     for ticker in proposed:
+        if len(chosen) >= 8:
+            break
         if ticker not in chosen:
             chosen.append(ticker)
-        if len(chosen) == 8:
-            break
     if not active.issubset(chosen):
         raise ValueError("Cannot remove held, pending or WATCHING symbol")
     return s.names(chosen)
