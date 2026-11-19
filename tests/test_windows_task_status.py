@@ -97,6 +97,13 @@ def test_status_handles_enabled_missing_moved_and_failed_tasks_read_only(tmp_pat
     assert result.returncode == (2 if scenario == "unavailable" else 0), result.stderr
     report = json.loads(result.stdout)
     assert report["read_only"] is True and report["model_calls"] == report["account_writes"] == 0
+    expected_names = [
+        "KoralEquities_ResearchObserver_5min",
+        "KoralEquities_PaperController_5min",
+    ]
+    assert [row["name"] for row in report["tasks"]] == (
+        [] if scenario == "unavailable" else expected_names
+    )
     if scenario == "unavailable":
         assert report["status"] == "INSPECTION_UNAVAILABLE"
     elif scenario == "healthy":

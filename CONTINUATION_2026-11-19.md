@@ -2,10 +2,16 @@
 
 ## Current evidenced state
 
-The current recoverable Koral Equities implementation is on
-`recovery/long-only-paper-2026-11-12` in
+The reviewed continuation is published on
+`continuation/paper-session-health-2026-11-19` in
 [`kamil42842888-code/TradingAgents`](https://github.com/kamil42842888-code/TradingAgents).
-The audited starting commit is `95bce9dda270d5c07e732131390d2af2cc2e006d`.
+Draft [PR #3](https://github.com/kamil42842888-code/TradingAgents/pull/3)
+targets `recovery/long-only-paper-2026-11-12`. The audited starting commit is
+`95bce9dda270d5c07e732131390d2af2cc2e006d`; the initial published implementation
+commit is `2c8b1f0a8eb5c45afec4bbd8642ed35625703828`. Its Git tree exactly matches
+the locally tested snapshot. Subsequent continuation commits record publication
+and strengthen the Windows test assertions. Pin the current PR head when taking
+the handover; do not assume that publication installs it on the workstation.
 The default `main` branch is upstream TradingAgents; it is not the current
 Koral paper implementation. The feature and recovery changes remain in draft
 pull requests [#1](https://github.com/kamil42842888-code/TradingAgents/pull/1)
@@ -82,6 +88,16 @@ Windows PowerShell behavior requires its Windows regression cases and an
 inspection on the actual migrated workstation; Linux success cannot establish
 those outcomes.
 
+At 15:38 UTC on 19 November, the repository's
+[Actions page](https://github.com/kamil42842888-code/TradingAgents/actions)
+reported that workflows are disabled on this fork because of Actions usage and
+can be re-enabled by a repository maintainer. No run exists for the published
+continuation commit. This is a CI access/configuration blocker, not a Windows
+test result. The connected GitHub tools do not expose re-enabling Actions, and
+the browser is signed out. A maintainer must re-enable the workflows, or the
+focused suite must be run in an isolated Windows checkout. Record that result
+against its exact source revision before declaring Windows validation complete.
+
 ## Build and review
 
 From this reviewed Git branch, with its pinned baseline available:
@@ -110,7 +126,10 @@ run another research batch immediately. The following is the precise local
 Codex handover:
 
 > Continue Koral Equities from the reviewed 19 November continuation. First read
-> this document and both recovery validation documents. Discover the actual
+> draft PR #3, this document, `CONTINUATION_VALIDATION_2026-11-19.md` and the
+> 12 November recovery instructions and validation record. Use branch
+> `continuation/paper-session-health-2026-11-19` and record its exact current
+> commit. Discover the actual
 > project, interpreter, private data root, installed source manifest, Git state
 > if present, active processes and the two Koral Equities task definitions.
 > Preserve unrelated Koral Quant, Research Lab and Control Panel work. Compare

@@ -25,7 +25,9 @@ python -m pytest -q tests/test_daily_support.py tests/test_daily_paper_integrati
 | Current ledger/account verification | Not performed; private account was not available |
 | Real model, broker, or market-data requests | None |
 | Actual schedule installation or activation | None |
-| Public GitHub publication | Push blocked by automatic approval review; source and tests are committed locally, but publishing the new branch requires explicit user approval |
+| Public GitHub publication | Completed after the user's explicit approval: draft [PR #3](https://github.com/kamil42842888-code/TradingAgents/pull/3), branch `continuation/paper-session-health-2026-11-19`; initial implementation commit `2c8b1f0a8eb5c45afec4bbd8642ed35625703828` has the exact locally tested tree |
+| Windows CI execution | Blocked: the repository Actions page reports workflows disabled on this fork because of Actions usage; no continuation run exists as of 15:38 UTC on 19 November |
+| Follow-up Windows test assertion | Requires both expected task rows in all inspectable scenarios and an empty list only when inspection is unavailable; 6 cases collected on Linux, Ruff and patch-whitespace checks passed; Windows execution remains unperformed |
 
 The new Windows workflow runs the focused daily suites on Windows/Python 3.13,
 including six mocked-task scenarios: enabled matching tasks, missing tasks,
@@ -33,6 +35,21 @@ migrated paths, nonzero exit results, disabled triggers and unavailable Schedule
 An added workflow is not evidence of a completed run; consult its exact commit's
 Actions result before claiming Windows validation. Mocked task tests also do not
 replace inspection of the actual user's task definitions and data.
+
+The initial publication was paused by automatic approval review. The user then
+explicitly approved publishing the prepared changes, and the authenticated
+GitHub connector created the branch and draft PR. The earlier publication block
+is resolved. The initial published tree is
+`12b0aa6f50cbb594347ba4860713c18a39733311`, identical to the tested local tree.
+The follow-up changes only documentation and the nonvacuous task-row assertion;
+they do not change production runtime behavior.
+
+The CI blocker is visible at the repository's
+[Actions page](https://github.com/kamil42842888-code/TradingAgents/actions).
+The available connector cannot re-enable workflows, and the browser session is
+not signed in. A repository maintainer can restore Actions, or a local isolated
+Windows checkout can run the command above. Neither route was completed in this
+session; the six Windows cases remain unverified.
 
 ## Runtime used
 
