@@ -49,6 +49,14 @@ def _snapshot_sources(observer: Path, session: str, tickers: list[str], now: dat
     return names, data, blobs
 
 
+def _source_hashes(blobs: dict[str, bytes]) -> dict[str, str]:
+    return {
+        "market_sha256": _sha(blobs["market.json"]),
+        "preopen_sha256": _sha(blobs["preopen.json"]),
+        "preclose_sha256": _sha(blobs["preclose.json"]),
+    }
+
+
 def _verify_accepted_reports(ledger: Path, state) -> None:
     """A machine-authorised conditional order is invalid if its report changes.
 
@@ -105,6 +113,17 @@ def inspect(ledger: Path, observer: Path, session: str, tickers: list[str], now:
     if book.last_session > session:
         raise ValueError("Cannot process a day older than the recorded paper book")
     new_session = book.last_session < session
+    if not new_session:
+        bindings = [
+            e["details"]
+            for e in st.audit
+            if e.get("kind") == "OBSERVER_SOURCE_BOUND"
+            and e.get("details", {}).get("date") == session
+        ]
+        if len(bindings) != 1 or any(
+            bindings[0].get(key) != digest for key, digest in _source_hashes(blobs).items()
+        ):
+            raise ValueError("Current Observer sources differ from the marked session evidence")
     active = (
         set(book.positions)
         | {o["ticker"] for o in book.orders}
@@ -411,7 +430,9 @@ def run_once(
 
         recover_pending(ledger)
         ready = inspect(ledger, observer, session, tickers, now)
-        names, source, _ = _snapshot_sources(observer, session, tickers, now)
+        names, source, blobs = _snapshot_sources(observer, session, tickers, now)
+        if any(ready[key] != digest for key, digest in _source_hashes(blobs).items()):
+            raise ValueError("Observer source changed between preflight and processing")
         status = (
             _commit_mark(ledger, observer, session, names, now, ready, write_state=write_state)
             if ready["new_session_to_mark"]

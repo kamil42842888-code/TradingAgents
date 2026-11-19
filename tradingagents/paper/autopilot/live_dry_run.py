@@ -167,6 +167,7 @@ def read_observation(observer: Path, session: str, tickers: list[str], now: date
             }:
                 raise ValueError("Missing earnings timestamp or exact source fields")
             earnings = EarningsSnapshot(**raw)
+            status["earnings_source"] = str(earnings.source)[:100]
             # A report cannot contain observations made AFTER the file claims
             # it was captured. safe() checks the phase cutoff, not this earlier
             # immutable snapshot boundary.

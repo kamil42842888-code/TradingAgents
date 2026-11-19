@@ -1,13 +1,72 @@
 {
   "known_git_blobs": {
+    "KE_DAILY_PAPER.py": [
+      "466139babf587cf180f5c4da6197b1c4b7be5fbf"
+    ],
+    "KE_Observer_Scheduler_2026-10-26.py": [
+      "a240d9074d560103101d891f7b063cbcc2fc92ab"
+    ],
+    "Register_Koral_Tasks.ps1": [
+      "fc56920b475074bdeba580497a0fbda50bdf2f91"
+    ],
+    "Verify_Koral_Recovery.py": [
+      "e7d62e94f8021c6afcca7f769fb64d41e4d418b8"
+    ],
+    "tests/test_daily_paper_integration.py": [
+      "0effe198044943c9254da9106cfb9d552bc2db2c"
+    ],
+    "tests/test_daily_plan.py": [
+      "8b0965ab5437ebe0216a8983fd25370cac30d3b5"
+    ],
+    "tests/test_daily_supervisor_release.py": [
+      "05f5def2454f66be63753698ab2983732ab8558c"
+    ],
+    "tests/test_daily_support.py": [
+      "7b818a96ca3ef850f739b3913d770a0429e18abe"
+    ],
+    "tests/test_recovery_release.py": [
+      "b13c6d75e35be246d4089e89cab294b19fd37444"
+    ],
+    "tools/recovery/build_release.py": [
+      "e8e2328e5e958d1e47a9a26c2f05c2e78b660c3a"
+    ],
+    "tools/recovery/release_history.json": [
+      "d7dbe368b2b652b2ff131d4bdced37125931637d"
+    ],
+    "tools/recovery/restore_sources.py": [
+      "42b7cdac65864b4814cc7d8f07dc089f68c9ef35"
+    ],
     "tradingagents/paper/autopilot/cli.py": [
       "cb4e571ce0c8d851a621924baabbd30c7c4eb5aa"
     ],
+    "tradingagents/paper/autopilot/daily_plan.py": [
+      "3768db4b7552f3336b519f18afdd6aacd8060a18"
+    ],
+    "tradingagents/paper/autopilot/daily_research.py": [
+      "dbbe9b734702e3e1ecafd46a76a4e501b7b47bd4"
+    ],
+    "tradingagents/paper/autopilot/daily_roster.py": [
+      "641f45e96ea322445bfd6120d6f34d2ab22b88d7"
+    ],
+    "tradingagents/paper/autopilot/daily_sessions.json": [
+      "39f754949d0124db2e21197d6a43112ce4c3d091"
+    ],
+    "tradingagents/paper/autopilot/daily_supervisor.py": [
+      "e003f0c69fb596fef78c69dc1b99a062723bb183"
+    ],
+    "tradingagents/paper/autopilot/daily_support.py": [
+      "6096a55c0904ea1f0d28879393bebd708ae3b8f8"
+    ],
+    "tradingagents/paper/autopilot/daily_transaction.py": [
+      "5186dacd0f6fad29ac5d765d1d8c22d41f71f210"
+    ],
     "tradingagents/paper/autopilot/feeds.py": [
-      "4146196e509bdb617baf0228abce4821aabc1780"
+      "4146196e509bdb617baf0228abce4821aabc1780",
+      "e33a1dec63d35b0b949b580ac0d635ad2ef494b3"
     ],
     "tradingagents/paper/autopilot/live_dry_run.py": [
-      "24ca03605c3a21698463a6dcd633b6376334eec5"
+      "24ca03605c3a21698463a6dcd633b6376334eec5",
+      "2892863528ae9d562a3b4101faa8d733c0eccd0a"
     ],
     "tradingagents/paper/autopilot/observe.py": [
       "4e2f052bab98b14965259a4d805f7a5133222117"
@@ -16,11 +75,16 @@
       "4416ea78e64cdbe7b028c1f23c195ae183f8fc76"
     ],
     "tradingagents/paper/autopilot/paper_bridge.py": [
-      "c93122c0c14db9281a5ad77ae415511e3745f912"
+      "c93122c0c14db9281a5ad77ae415511e3745f912",
+      "c4dcd1ec0d9e5580e06e25425d2436c8a69cc90f"
+    ],
+    "tradingagents/paper/autopilot/paper_forward.py": [
+      "a98ccde50dcba977b0c93db224d4dc14279e3866"
     ],
     "tradingagents/paper/autopilot/runner.py": [
       "8b64ca30f30e480a937e5c67a42bdbb17fb46a67",
-      "f7d3fad91027ed2e18e510391c50e5b609c7d82a"
+      "f7d3fad91027ed2e18e510391c50e5b609c7d82a",
+      "7b39d945f472db26c28ac195a38d77d175836695"
     ],
     "tradingagents/paper/autopilot/state.py": [
       "1636ba43fd3c538fc91685b0620cd357727cbea6"

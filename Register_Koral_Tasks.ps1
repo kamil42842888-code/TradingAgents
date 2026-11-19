@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('Inspect', 'Register', 'Probe', 'Activate', 'Disarm')]
+    [ValidateSet('Status', 'Inspect', 'Register', 'Probe', 'Activate', 'Disarm')]
     [string]$Mode = 'Inspect',
     [string]$Project = $PSScriptRoot,
     [switch]$AcceptModelCharges,
@@ -17,6 +17,76 @@ $definitions = @(
     @{Name='KoralEquities_PaperController_5min'; Script='KE_DAILY_PAPER.py'; Arg='--tick'; Minutes=90}
 )
 $identity = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+if ($Mode -eq 'Status') {
+    # Unlike the installation preflight, this is safe while the schedule runs.
+    # Never start, stop, register, disable or reconfigure a task here.
+    $rows = @()
+    try {
+        $available = @(Get-ScheduledTask -TaskPath '\' -ErrorAction Stop)
+    } catch {
+        [ordered]@{
+            schema='koral-windows-task-status-v1'; read_only=$true
+            checked_utc=[DateTime]::UtcNow.ToString('o')
+            status='INSPECTION_UNAVAILABLE'; error_type=$_.Exception.GetType().Name
+            tasks=@(); account_writes=0; model_calls=0
+        } | ConvertTo-Json -Depth 8
+        exit 2
+    }
+    foreach ($definition in $definitions) {
+        $task = $available | Where-Object { $_.TaskName -ieq $definition.Name } | Select-Object -First 1
+        if ($null -eq $task) {
+            $rows += [ordered]@{ name=$definition.Name; present=$false; findings=@('TASK_ABSENT') }
+            continue
+        }
+        $expectedArgs = '"' + (Join-Path $Project $definition.Script) + '" ' + $definition.Arg
+        $actions = @($task.Actions)
+        $actionMatches = $actions.Count -eq 1 -and
+            $actions[0].Execute -ieq $pythonPath -and
+            $actions[0].Arguments -ceq $expectedArgs -and
+            $actions[0].WorkingDirectory -ieq $Project
+        $intervals = @($task.Triggers | ForEach-Object { $_.Repetition.Interval })
+        $fiveMinutes = $intervals.Count -eq 1 -and $intervals[0] -eq 'PT5M'
+        $principalMatches = $task.Principal.UserId -ieq $identity -and
+            $task.Principal.LogonType -eq 'Interactive' -and $task.Principal.RunLevel -eq 'Limited'
+        $findings = @()
+        if (-not $actionMatches) { $findings += 'TASK_ACTION_MISMATCH' }
+        if (-not (Test-Path -LiteralPath $pythonPath -PathType Leaf)) { $findings += 'PROJECT_PYTHON_MISSING' }
+        if (-not (Test-Path -LiteralPath (Join-Path $Project $definition.Script) -PathType Leaf)) { $findings += 'TASK_SCRIPT_MISSING' }
+        if (-not $fiveMinutes) { $findings += 'TRIGGER_INTERVAL_MISMATCH' }
+        if (@($task.Triggers | Where-Object { $_.Enabled -ne $true }).Count -gt 0) { $findings += 'TASK_TRIGGER_DISABLED' }
+        if (-not $principalMatches) { $findings += 'TASK_PRINCIPAL_MISMATCH' }
+        if ($task.Settings.MultipleInstances -ne 'IgnoreNew') { $findings += 'MULTIPLE_INSTANCE_POLICY_MISMATCH' }
+        if (-not $task.Settings.WakeToRun) { $findings += 'WAKE_TO_RUN_DISABLED' }
+        if ($task.State -notin @('Ready', 'Running')) { $findings += 'TASK_NOT_ENABLED' }
+        $runtime = $null
+        try {
+            $info = Get-ScheduledTaskInfo -InputObject $task -ErrorAction Stop
+            $runtime = [ordered]@{
+                last_run_time=$info.LastRunTime.ToString('o')
+                next_run_time=$info.NextRunTime.ToString('o')
+                last_task_result=$info.LastTaskResult
+                missed_runs=$info.NumberOfMissedRuns
+            }
+            if ($task.State -ne 'Running' -and $info.LastTaskResult -ne 0) { $findings += 'LAST_TASK_RESULT_NONZERO' }
+        } catch { $findings += 'TASK_RUNTIME_INFO_UNAVAILABLE' }
+        $rows += [ordered]@{
+            name=$definition.Name; present=$true; state=[string]$task.State
+            action_matches_project=$actionMatches; principal_matches_user=$principalMatches
+            trigger_intervals=$intervals; wake_to_run=[bool]$task.Settings.WakeToRun
+            multiple_instances=[string]$task.Settings.MultipleInstances
+            runtime=$runtime; findings=$findings
+        }
+    }
+    $hasFindings = @($rows | Where-Object { $_.findings.Count -gt 0 }).Count -gt 0
+    [ordered]@{
+        schema='koral-windows-task-status-v1'; read_only=$true
+        checked_utc=[DateTime]::UtcNow.ToString('o')
+        status=$(if ($hasFindings) { 'ATTENTION_REQUIRED' } else { 'TASK_CONFIGURATION_MATCHES' })
+        tasks=$rows; account_writes=0; model_calls=0
+        forward_session_verification='NOT_PERFORMED_BY_TASK_INSPECTION'
+    } | ConvertTo-Json -Depth 8
+    exit 0
+}
 function Get-OwnedTask($definition) {
     $task = Get-ScheduledTask -TaskPath '\' -TaskName $definition.Name -ErrorAction SilentlyContinue
     if ($null -ne $task) {

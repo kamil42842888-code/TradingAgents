@@ -11,8 +11,9 @@ import re
 import tempfile
 from copy import deepcopy
 from dataclasses import asdict, dataclass, field
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
+from time import sleep as _replacement_pause
 
 from tradingagents.paper.conditional import ConditionalBook, TradeIntent
 
@@ -52,16 +53,16 @@ class V3State:
     schema: str = VERSION
 
     @classmethod
-    def new(cls, start: str, tickers: list[str]) -> "V3State":
+    def new(cls, start: str, tickers: list[str]) -> V3State:
         date.fromisoformat(start)
-        instance = cls(datetime.now(timezone.utc).isoformat(),
+        instance = cls(datetime.now(UTC).isoformat(),
                        ConditionalBook.new(start), normalize_tickers(tickers))
         instance.event("V3_CREATED", date=start, paper_only=True, watchlist=instance.watchlist)
         return instance
 
     def event(self, kind: str, **details) -> None:
         record = {"seq": len(self.audit) + 1, "kind": kind,
-                  "utc": datetime.now(timezone.utc).isoformat(),
+                  "utc": datetime.now(UTC).isoformat(),
                   "previous": self.audit[-1]["hash"] if self.audit else "0" * 64,
                   "details": details}
         record["hash"] = fingerprint(record)
@@ -75,7 +76,7 @@ class V3State:
                 "paper_only": True}
 
     @classmethod
-    def from_dict(cls, data: dict) -> "V3State":
+    def from_dict(cls, data: dict) -> V3State:
         expected = {"schema", "created_utc", "watchlist", "auto_paper_enabled", "paused",
                     "ai_receipts", "portfolio", "audit", "paper_only"}
         if type(data) is not dict or set(data) != expected or data["schema"] != VERSION or data["paper_only"] is not True:
@@ -220,6 +221,22 @@ def read(path: Path = STATE) -> V3State:
     return result
 
 
+def _replace_synced_ledger(temporary: str, path: Path) -> None:
+    """Bounded Windows sharing retries; never skip a ledger commit as a cache hit.
+
+    Retry only the rename of the same fsynced bytes, not research or accounting.
+    Persistent permissions failures still propagate with the old ledger intact.
+    """
+    for attempt in range(6):
+        try:
+            os.replace(temporary, path)
+            return
+        except PermissionError as exc:
+            if getattr(exc, "winerror", None) not in {5, 32, 33} or attempt == 5:
+                raise
+            _replacement_pause(0.05 * 2 ** attempt)
+
+
 def atomic_write(path: Path, state: V3State) -> None:
     path = checked_path(path)
     path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -231,7 +248,7 @@ def atomic_write(path: Path, state: V3State) -> None:
             handle.write("\n")
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(tmp, path)
+        _replace_synced_ledger(tmp, path)
     finally:
         if os.path.exists(tmp):
             os.unlink(tmp)

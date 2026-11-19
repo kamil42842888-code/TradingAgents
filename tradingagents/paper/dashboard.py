@@ -17,7 +17,7 @@ import subprocess
 import sys
 import threading
 import webbrowser
-from datetime import datetime
+from datetime import UTC, datetime
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -25,10 +25,14 @@ from urllib.parse import unquote, urlsplit
 
 import pytz
 
-from .cli import DEFAULT_PATH, DEFAULT_TICKERS, last_safe_session, read_book
-from .engine import Book
 from .auto_v3 import DEFAULT_HOME as V3_HOME, read as read_v3, verify as verify_v3
-from .discovery_web import DiscoveryRuntime, latest as discovery_latest, safe_report as safe_discovery_report
+from .cli import DEFAULT_PATH, DEFAULT_TICKERS, last_safe_session, read_book
+from .discovery_web import (
+    DiscoveryRuntime,
+    latest as discovery_latest,
+    safe_report as safe_discovery_report,
+)
+from .engine import Book
 
 STATIC = Path(__file__).with_name("web")
 _REPORT_RE = re.compile(r"^[a-zA-Z0-9_./-]+$")
@@ -126,7 +130,7 @@ def autopilot_paper_snapshot(path: Path) -> dict:
     Never initialise, enable, submit or modify orders from the HTTP handler.
     Tampered market-evidence or journal files produce an explicit safe error.
     """
-    from datetime import timezone
+
     from tradingagents.paper.autopilot.state import read as read_autopilot
     if not path.is_file():
         return {"status": "not_initialized", "broker_connected": False,
@@ -135,19 +139,57 @@ def autopilot_paper_snapshot(path: Path) -> dict:
         state = read_autopilot(path)
         book = state.portfolio.book
         heartbeat = path.parent / "service_heartbeat.json"
+        daily_heartbeat = path.resolve().parents[2] / "paper_operations/daily_v1/heartbeat.json"
         pulse_recent = False
-        if heartbeat.is_file():
+        operations = {"status": "NO_DAILY_CONTROLLER_HEARTBEAT"}
+        if daily_heartbeat.is_file():
+            try:
+                pulse = json.loads(daily_heartbeat.read_text(encoding="utf-8"))
+                when = datetime.fromisoformat(pulse["utc"])
+                age = (datetime.now(UTC) - when).total_seconds()
+                operations = {k: pulse.get(k) for k in (
+                    "status", "utc", "ny_session", "phase", "missing_sources"
+                )}
+                # Five-minute task cadence plus tolerance. A heartbeat proves
+                # a recent tick, not a complete observation or a successful trade.
+                pulse_recent = bool(
+                    0 <= age <= 660 and pulse.get("paper_only") is True
+                    and pulse.get("broker_connected") is False
+                    and pulse.get("status") in {
+                        "DAILY_ROSTER_FROZEN", "WAITING_FOR_REQUIRED_OBSERVATIONS",
+                        "FORWARD_SESSION_PROCESSED", "NON_SESSION_NO_MODEL_CALLS",
+                        "TODAY_ROSTER_MISSED_NEXT_SESSION_PREPARED",
+                    }
+                )
+            except (OSError, ValueError, KeyError, TypeError):
+                operations = {"status": "UNREADABLE_HEARTBEAT"}
+        elif heartbeat.is_file():
             pulse = json.loads(heartbeat.read_text(encoding="utf-8"))
             when = datetime.fromisoformat(pulse["last_pulse_utc"])
             if when.tzinfo is not None and when.utcoffset() is not None:
-                age = (datetime.now(timezone.utc) - when).total_seconds()
+                age = (datetime.now(UTC) - when).total_seconds()
                 pulse_recent = bool(0 <= age <= 180 and pulse.get("mode") == "PAPER_ONLY")
+        from tradingagents.paper.autopilot.performance import scorecard
+        equity = book.equity()
+        gross_exposure = equity - book.cash_gbp
         return {
             "status": "paper_ready",
             "mode": "EXPERIMENTAL_PAPER_ONLY",
             "enabled": state.auto_paper_enabled,
             "paused": state.paused,
             "heartbeat_recent": pulse_recent,
+            "operations": operations,
+            "performance": scorecard(book),
+            "risk": {
+                "gross_exposure_gbp": round(gross_exposure, 2),
+                "gross_exposure_fraction": gross_exposure / equity if equity > 0 else None,
+                "limits": dict(book.rules), "halted": book.halted,
+                "valuation_session": book.last_session,
+            },
+            "equity_history": list(book.equity_history),
+            "positions_detail": dict(book.positions),
+            "orders_detail": list(book.orders),
+            "closed_trade_journal": list(book.completed),
             "last_session": book.last_session,
             "equity_gbp": round(book.equity(), 2),
             "cash_gbp": round(book.cash_gbp, 2),

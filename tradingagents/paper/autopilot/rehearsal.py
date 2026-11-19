@@ -10,7 +10,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -55,7 +55,7 @@ def mock_calendar(_ticker, day, at):
     return EarningsSnapshot(
         day, "2026-12-15", "2026-07-21",
         "REHEARSAL_FAKE_CALENDAR_NEVER_USE_FOR_LIVE_ORDERS",
-        True, at.astimezone(timezone.utc).isoformat(),
+        True, at.astimezone(UTC).isoformat(),
     )
 
 
@@ -115,6 +115,10 @@ def run_rehearsal(destination: Path) -> dict:
     folder.mkdir(parents=True, exist_ok=False)
     account = folder / "portfolio.json"
     create_new(account, DAYS[0], [TICKER])
+    runner.snapshot_phase(
+        account, phase="preclose", now=clock(DAYS[0], 17, 10),
+        fetcher=mock_calendar, completion_clock=lambda: clock(DAYS[0], 17, 10),
+    )
     runner.mark_closed_sessions(account, now=clock(DAYS[0]), loader=quotes)
     state = read(account)
     state.set_running(True)  # Isolated REHEARSAL account, never V3.1 real paper
@@ -134,7 +138,7 @@ def run_rehearsal(destination: Path) -> dict:
     for confirmations, day in enumerate(DAYS[1:3], start=1):
         runner.snapshot_phase(
             account, phase="preclose", now=clock(day, 17, 10),
-            fetcher=mock_calendar,
+            fetcher=mock_calendar, completion_clock=lambda day=day: clock(day, 17, 10),
         )
         runner.mark_closed_sessions(account, now=clock(day), loader=quotes)
         state = read(account)
@@ -145,7 +149,7 @@ def run_rehearsal(destination: Path) -> dict:
 
     runner.snapshot_phase(
         account, phase="preopen", now=clock(DAYS[3], 9, 15),
-        fetcher=mock_calendar,
+        fetcher=mock_calendar, completion_clock=lambda: clock(DAYS[3], 9, 15),
     )
     runner.mark_closed_sessions(account, now=clock(DAYS[3]), loader=quotes)
     state = read(account)

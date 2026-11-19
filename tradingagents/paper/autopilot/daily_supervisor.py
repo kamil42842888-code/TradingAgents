@@ -46,8 +46,13 @@ def check_integrity(project: Path):
     if (project / ".koral-source-transaction.json").exists():
         raise ValueError("Source recovery transaction unfinished; keep tasks disabled")
     manifest = s.read_json(project / "KE_DAILY_SOURCE_MANIFEST.json")
-    if manifest.get("schema") != "koral-daily-installed-sources-v1":
+    if (
+        not isinstance(manifest, dict)
+        or manifest.get("schema") != "koral-daily-installed-sources-v1"
+    ):
         raise ValueError("Missing source-only installation manifest")
+    if not isinstance(manifest.get("sha256"), dict):
+        raise ValueError("Installed source manifest hashes must be an object")
     required = {
         "KE_DAILY_PAPER.py",
         "KE_Observer_Scheduler_2026-10-26.py",
@@ -116,20 +121,16 @@ def scan_for_next_session(project: Path, session: str, root: Path, *, runner=Non
     return record
 
 
-def status(project: Path, root: Path | None = None) -> dict:
-    root = root or s.home()
-    cfg = s.load_config(root)
-    heart = root / "heartbeat.json"
-    result = {
-        "schema": s.SCHEMA,
-        "configuration": cfg,
-        "heartbeat": s.read_json(heart) if heart.exists() else None,
-        "account_changes": 0,
-        "broker_connected": False,
-    }
-    latest = sorted((root / "summaries").glob("*.json")) if (root / "summaries").exists() else []
-    result["latest_session"] = s.read_json(latest[-1]) if latest else None
-    return result
+def status(
+    project: Path,
+    root: Path | None = None,
+    *,
+    now: datetime | None = None,
+    stale_after_minutes: float = 14.0,
+) -> dict:
+    from .daily_health import report
+
+    return report(root or s.home(), now=now, stale_after_minutes=stale_after_minutes)
 
 
 def _tick(
@@ -226,7 +227,9 @@ def _tick(
                 else:
                     # Validate before adopting a new watchlist. Preserve every
                     # active symbol. Frozen selection is not trade permission.
-                    paper_bridge.inspect_sources(observer, day, record["watchlist"], instant)
+                    source, _ = paper_bridge.inspect_sources(
+                        observer, day, record["watchlist"], instant
+                    )
                     daily_roster.adopt(ledger, day, record, root=root)
                     cfg_for_research = dict(cfg)
                     output = paper_forward.run_once(
@@ -252,6 +255,7 @@ def _tick(
                         "status": "FORWARD_SESSION_PROCESSED",
                         "last_execution": output,
                         "research_receipts": receipts,
+                        "research_eligibility": source["tickers"],
                         "last_mark": state.portfolio.book.last_session,
                         "equity_gbp": state.portfolio.book.equity(),
                         "cash_gbp": state.portfolio.book.cash_gbp,
@@ -259,9 +263,8 @@ def _tick(
                         "positions": sorted(state.portfolio.book.positions),
                         "orders": state.portfolio.book.orders,
                         "active_symbols": sorted(s.active_symbols(state)),
-                        "first_processed_utc": prior.get("first_processed_utc")
-                        if prior
-                        else s.utcnow().isoformat(),
+                        "first_processed_utc": (prior or {}).get("first_processed_utc")
+                        or s.utcnow().isoformat(),
                         "monetary_invoice_cap": False,
                     }
                     s.atomic_json(summary_file, summary)
@@ -305,15 +308,26 @@ def tick(project: Path, **kwargs) -> dict:
         summary["data_complete"] = (
             not result.get("missing_sources") and result["status"] == "FORWARD_SESSION_PROCESSED"
         )
+        from .performance import scorecard
         from .state import STATE, read
 
         state = read(kwargs.get("ledger") or STATE)
+        book = state.portfolio.book
+        equity = book.equity()
         summary.update(
             cash_gbp=state.portfolio.book.cash_gbp,
             equity_gbp=state.portfolio.book.equity(),
             positions=state.portfolio.book.positions,
             orders=state.portfolio.book.orders,
             conditional_plans=state.portfolio.intents,
+            performance=scorecard(book),
+            risk={
+                "gross_exposure_gbp": round(equity - book.cash_gbp, 2),
+                "gross_exposure_fraction": (equity - book.cash_gbp) / equity if equity > 0 else None,
+                "limits": dict(book.rules),
+                "halted": book.halted,
+                "valuation_session": book.last_session,
+            },
             research_receipts={
                 k: v for k, v in state.ai_receipts.items() if k.startswith(day + ":")
             },

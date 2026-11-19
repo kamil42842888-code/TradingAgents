@@ -1,19 +1,48 @@
-from datetime import datetime, timezone, timedelta
-from zoneinfo import ZoneInfo
 import json
+from datetime import UTC, datetime
+from zoneinfo import ZoneInfo
+
 import pytest
 
-from tradingagents.paper.conditional import EarningsSnapshot
 from tradingagents.paper.autopilot import feeds
+from tradingagents.paper.conditional import EarningsSnapshot
 
 NY=ZoneInfo("America/New_York")
+
+
+@pytest.mark.parametrize("stage,error,expected", [
+    ("yahoo", TimeoutError("private details"), "UNVERIFIED_EARNINGS_SOURCE:YAHOO_TimeoutError"),
+    ("nasdaq", ValueError("private details"), "UNVERIFIED_EARNINGS_SOURCE:NASDAQ_ValueError"),
+])
+def test_provider_failure_retains_safe_stage_without_exception_text(monkeypatch, stage, error, expected):
+    monkeypatch.setattr(feeds, "_yahoo_earnings", lambda *a: ("2026-07-25", "2026-12-01"))
+    monkeypatch.setattr(feeds, "_nasdaq_next_date", lambda *a: True)
+    def fail(*args):
+        raise error
+    monkeypatch.setattr(feeds, "_yahoo_earnings" if stage == "yahoo" else "_nasdaq_next_date", fail)
+    result = feeds.earnings_for("NVDA", "2026-10-22", when("2026-10-22", 17, 10))
+    assert result.source == expected
+    assert not result.verified and not result.safe("2026-10-22", "afterclose")
+    assert result.next_earnings_date is result.last_earnings_date is None
+
+
+def test_http_failure_code_and_missing_dates_are_distinct(monkeypatch):
+    from urllib.error import HTTPError
+    monkeypatch.setattr(feeds, "_yahoo_earnings", lambda *a: (None, None))
+    now = when("2026-10-22", 17, 10)
+    assert feeds.earnings_for("NVDA", "2026-10-22", now).source.endswith("YAHOO_MISSING_DATES")
+    monkeypatch.setattr(feeds, "_yahoo_earnings", lambda *a: ("2026-07-25", "2026-12-01"))
+    def fail(*args):
+        raise HTTPError("https://example.invalid/private", 403, "private", {}, None)
+    monkeypatch.setattr(feeds, "_nasdaq_next_date", fail)
+    assert feeds.earnings_for("NVDA", "2026-10-22", now).source.endswith("NASDAQ_HTTP_403")
 
 def when(d,h,m):
     return datetime.fromisoformat(f"{d}T{h:02d}:{m:02d}:00").replace(tzinfo=NY)
 
 def snapshot(t,day,now,verified=True):
     return EarningsSnapshot(day,"2026-12-01","2026-07-25","issuer+secondary",verified,
-                            now.astimezone(timezone.utc).isoformat())
+                            now.astimezone(UTC).isoformat())
 
 @pytest.mark.parametrize("local,phase",[
     (when("2026-10-22",9,15),"preopen"),
@@ -30,7 +59,8 @@ def test_ny_wall_clock_phases(local,phase):
     (when("2026-10-24",18,10),"close"),
 ])
 def test_wrong_clock_or_weekend_cannot_fake_cutoff(local,phase):
-    with pytest.raises(ValueError):feeds.session_cutoff(local,phase)
+    with pytest.raises(ValueError):
+        feeds.session_cutoff(local,phase)
 
 
 def test_immutable_preopen_evidence_and_readback(tmp_path):
@@ -50,7 +80,8 @@ def test_missing_preopen_is_not_retroactively_verified(tmp_path):
     obs=feeds.read_earnings(tmp_path,"2026-10-22","preopen",{"NVDA"},now)
     assert obs["NVDA"].verified is False
     assert obs["NVDA"].safe("2026-10-22","preopen") is False
-    with pytest.raises(ValueError):feeds.capture_earnings(tmp_path,"2026-10-22","preopen",["NVDA"],now)
+    with pytest.raises(ValueError):
+        feeds.capture_earnings(tmp_path,"2026-10-22","preopen",["NVDA"],now)
 
 
 def test_no_secondary_confirmation_is_a_veto(monkeypatch):
@@ -126,7 +157,7 @@ def test_monday_research_date_policy_only_not_real_source_approval(
     fake=EarningsSnapshot(
         "2026-10-26",next_release,previous,
         "SYNTHETIC_DATE_MATH_TEST_NOT_A_VERIFIED_SOURCE",True,
-        clock.astimezone(timezone.utc).isoformat(),
+        clock.astimezone(UTC).isoformat(),
     )
     assert fake.safe("2026-10-26","afterclose") is permitted
 
@@ -137,7 +168,7 @@ def test_monday_without_verified_earnings_remains_blocked():
     fake=EarningsSnapshot(
         "2026-10-26","2026-12-10","2026-09-24",
         "UNVERIFIED_SECONDARY_FEEDS",False,
-        clock.astimezone(timezone.utc).isoformat(),
+        clock.astimezone(UTC).isoformat(),
     )
     assert not fake.safe("2026-10-26","afterclose")
 
@@ -166,7 +197,7 @@ def test_future_or_wrong_window_calendar_envelope_fails_closed(tmp_path):
         completion_clock=lambda: recorded_at,
     )
     actual = json.loads(file.read_text())
-    actual["observed_utc"] = when("2026-10-22", 9, 10).astimezone(timezone.utc).isoformat()
+    actual["observed_utc"] = when("2026-10-22", 9, 10).astimezone(UTC).isoformat()
     file.write_text(json.dumps(actual))
     result = feeds.read_earnings(
         tmp_path, "2026-10-22", "preclose", {"NVDA"},

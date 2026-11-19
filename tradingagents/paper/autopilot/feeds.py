@@ -13,6 +13,7 @@ import re
 import tempfile
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
+from urllib.error import HTTPError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 from zoneinfo import ZoneInfo
@@ -91,15 +92,26 @@ def earnings_for(ticker: str, session: str, now: datetime) -> EarningsSnapshot:
     issuer's primary IR release. False returns block opening new positions.
     """
     observed = now.astimezone(UTC).isoformat()
+    stage = "YAHOO"
+    reason = "YAHOO_MISSING_DATES"
     try:
         last, upcoming = _yahoo_earnings(ticker, session)
-        if not last or not upcoming or not _nasdaq_next_date(ticker, upcoming):
-            raise ValueError("Missing or unmatched issuer earnings event calendar")
-        return EarningsSnapshot(
-            session, upcoming, last, "YAHOO+NASDAQ_CONSENSUS_SECONDARY", True, observed
-        )
-    except Exception:
-        return EarningsSnapshot(session, None, None, "UNVERIFIED_EARNINGS_SOURCE", False, observed)
+        if last and upcoming:
+            stage = "NASDAQ"
+            reason = "NASDAQ_NO_MATCH"
+            if _nasdaq_next_date(ticker, upcoming):
+                return EarningsSnapshot(
+                    session, upcoming, last, "YAHOO+NASDAQ_CONSENSUS_SECONDARY", True, observed
+                )
+    except HTTPError as exc:
+        reason = f"{stage}_HTTP_{exc.code}"
+    except Exception as exc:
+        # Keep a bounded diagnostic in the immutable source record. Never copy
+        # exception text/URLs/headers which may contain credentials or HTML.
+        reason = stage + "_" + type(exc).__name__[:60]
+    return EarningsSnapshot(
+        session, None, None, "UNVERIFIED_EARNINGS_SOURCE:" + reason, False, observed
+    )
 
 
 def unknown_earnings(

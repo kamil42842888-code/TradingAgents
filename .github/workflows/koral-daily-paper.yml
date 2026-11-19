@@ -1,0 +1,65 @@
+name: Koral daily paper Windows regression
+
+on:
+  push:
+    branches: ['continuation/**', 'recovery/**']
+    paths:
+      - 'tradingagents/paper/**'
+      - 'KE_DAILY_PAPER.py'
+      - 'KE_Observer_Scheduler_2026-10-26.py'
+      - 'Register_Koral_Tasks.ps1'
+      - 'Verify_Koral_Recovery.py'
+      - 'tools/recovery/**'
+      - 'tools/audit/**'
+      - 'tests/test_daily*'
+      - 'tests/test_forward_source_continuity.py'
+      - 'tests/test_paper_forward_integration.py'
+      - 'tests/test_recovery*'
+      - 'tests/test_windows_task_status.py'
+      - 'tests/test_audit_snapshot.py'
+      - 'tests/test_workstation*'
+      - 'tests/test_windows_audit_wrapper.py'
+      - '.github/workflows/koral-daily-paper.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: koral-daily-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  isolated-paper-regression:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+      - name: Install project and test dependencies
+        run: python -m pip install -e ".[dev]"
+      - name: Offline paper and read-only task-status regression
+        # All account/evidence inputs are temporary fixtures. Task APIs are
+        # mocked; no production task is registered, started or changed.
+        run: >-
+          python -m pytest -q
+          tests/test_daily_support.py
+          tests/test_daily_paper_integration.py
+          tests/test_recovery_release.py
+          tests/test_daily_supervisor_release.py
+          tests/test_daily_plan.py
+          tests/test_daily_health.py
+          tests/test_daily_roster_capacity.py
+          tests/test_forward_source_continuity.py
+          tests/test_daily_supervisor_progress.py
+          tests/test_daily_status_cli.py
+          tests/test_windows_task_status.py
+          tests/test_recovery_build.py
+          tests/test_paper_forward_integration.py
+          tests/test_audit_snapshot.py
+          tests/test_workstation_audit.py
+          tests/test_workstation_evidence.py
+          tests/test_windows_audit_wrapper.py
