@@ -66,14 +66,13 @@ does not upload them.
 
 ## What the checks mean
 
-**Source provenance.** The audit compares 125 continuation runtime files, or the
-124-file recovery baseline, against reviewed inventories. Both LF and CRLF
-checkouts are recognised. The inventory references the audited recovery commit
-`95bce9dda270d5c07e732131390d2af2cc2e006d` and continuation implementation at
-`ee858675b50e8bf3ada00bd2bb7a80820a3cf028`. Those production sources remain unchanged
-by the standalone audit. The target's own installed manifest is checked
-separately; a self-consistent manifest cannot establish reviewed provenance.
-A matching Git checkout without an installed manifest is reported distinctly.
+**Source provenance.** The audit checks inventories for the 124-file recovery
+baseline, the 125-file continuation and the reconciled cutover candidate. Both
+LF and CRLF checkouts are recognised. The bundled `source_reference.json` pins
+the runtime bytes for each version and identifies the current candidate. A
+matching earlier version remains identifiable. A self-consistent installed
+manifest is a separate check. A matching Git checkout without an installed
+manifest is reported distinctly.
 
 **Session evidence.** The report uses the declared effective session and the
 pinned New York due windows. It checks the local ledger's hash chain, sealed

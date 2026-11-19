@@ -212,3 +212,24 @@ the searched workstation paths, and Scheduler lookup was unavailable in the
 managed session. Completion of the migration and any activation still require
 the existing source, exposure, backup and single-workstation cutover checks.
 Workstation paths, task metadata and evidence reports were kept local.
+
+## Reconciled Windows cutover candidate
+
+The recovered November 17 engineering tree and the public continuation share
+equivalent recovery and subscription-activation source trees. The cutover
+candidate combines the intervening Windows ledger replacement, feed and scan
+diagnostics, status views and rehearsal fixes with the continuation's source
+continuity, roster capacity, session health and independent audit. The
+reconciled runtime is Git tree `4f358f50cf436ca1a795d54034dca86b3091c5ac`,
+published at `8ff9aed3a5a5678a65847e581bd610131d7e10af`. The audit pins that
+runtime alongside the two earlier reviewed versions.
+
+The recovery ZIP is still a guarded source update for an existing
+installation. A missing installation uses a separately verified flat source
+stage and an archive-verified copy of the original profile. The source
+package retains its existing prerequisites and update guards.
+
+Exact-pins CPython 3.13.3 verification and the isolated focused Windows suite
+are recorded in the validation file. Native publication and Scheduler checks
+under the intended Windows identity remain deployment gates. Installation and
+activation are separate, and the draft branch does not imply either.

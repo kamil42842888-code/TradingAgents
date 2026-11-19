@@ -55,6 +55,7 @@ def _relative(value: object) -> bool:
 
 def source_report(project: Path, reader: Snapshot, reference: dict) -> dict:
     versions = reference["versions"]
+    current_version = reference.get("current_version", "continuation_2026-11-19")
     expected_paths = set().union(*(v["sha256"] for v in versions.values()))
     actual, unavailable = {}, []
     for rel in sorted(expected_paths):
@@ -124,13 +125,14 @@ def source_report(project: Path, reader: Snapshot, reference: dict) -> dict:
     except (ValueError, OSError):
         manifest_status = "INVALID_OR_UNREADABLE"
     differing = []
-    for rel, digest in versions["continuation_2026-11-19"]["sha256"].items():
+    for rel, digest in versions[current_version]["sha256"].items():
         if actual.get(rel, {}).get("normalized") != digest:
             differing.append(rel)
     pending = reader.exists(project / ".koral-source-transaction.json")
     return {
         "status": "MATCHES_REVIEWED_SOURCE" if matched else "UNRECOGNIZED_OR_INCOMPLETE_SOURCE",
         "matched_version": matched,
+        "matches_current_reference": matched == current_version,
         "reference_commit": versions[matched]["commit"] if matched else None,
         "checked_runtime_files": len(expected_paths),
         "missing_or_unreadable_files": unavailable,
@@ -252,7 +254,7 @@ def inspect(project: Path, data_root: Path, *, now: datetime, tasks: Path | None
     scheduler = task_report(tasks, reader, now)
     consistency = reader.verify()
     source_ready = (
-        sources["matched_version"] == "continuation_2026-11-19"
+        sources["matches_current_reference"]
         and sources["installed_manifest"] == "CONSISTENT"
         and not sources["unfinished_source_transaction"]
         and sources["expected_project_interpreter_present"]
@@ -324,7 +326,7 @@ def summary(report: dict) -> str:
     if report["status"] == "CONCURRENT_CHANGE_RETRY":
         lines.append("Inputs changed during inspection. Retry into a new report directory after the current activity finishes normally.")
     else:
-        if source["matched_version"] != "continuation_2026-11-19":
+        if not source["matches_current_reference"]:
             lines.append("- Compare the installed source with the reviewed continuation before considering a source update.")
         if source["installed_manifest"] != "CONSISTENT" or source["unfinished_source_transaction"]:
             lines.append("- Reconcile the installed manifest or unfinished source transaction using the existing recovery procedure.")

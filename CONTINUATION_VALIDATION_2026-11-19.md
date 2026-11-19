@@ -126,6 +126,22 @@ The fixture link checks remain in place. Changed Python files passed Ruff
 0.17.6, and `git diff --check` passed. The remaining native link cases require
 a Windows environment permitted to create those links in its test directory.
 
+## Reconciled candidate verification
+
+The runtime tree `4f358f50cf436ca1a795d54034dca86b3091c5ac` was checked on
+Windows using 64-bit CPython 3.13.3 and its 91 archived package pins. The
+offline rebuild matched the required versions and passed `pip check`. The
+flat-source verifier checked 128 installed manifest entries. The guarded
+release ZIP contained 43 verified payload files and 104 pinned prerequisites.
+
+The focused Windows rerun recorded **147 passed and 5 deselected**. The five
+deselections were one symbolic-link check and four native hard-link cases.
+They were excluded after the managed environment denied the respective
+native operations. This result covers the selected source, audit, mocked
+Scheduler, packaging, ledger replacement, dashboard, roster and eligibility
+regressions. Native link, actual evidence publication and real Scheduler
+acceptance remain pending under the intended Windows task identity.
+
 ## Runtime used
 
 | Component | Version |

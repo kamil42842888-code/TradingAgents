@@ -4,6 +4,7 @@ import hashlib
 import importlib.util
 import json
 import os
+import re
 import subprocess
 import sys
 from datetime import UTC, datetime
@@ -60,6 +61,7 @@ def test_source_versions_distinguished_and_read_without_execution(source_fixture
     reader = audit.Snapshot({"source": project})
     report = audit.source_report(project, reader, reference)
     assert report["matched_version"] == version
+    assert report["matches_current_reference"] is (version == "continuation_2026-11-19")
     assert report["installed_manifest"] == "CONSISTENT"
     assert report["target_code_executed"] is False
     assert reader.verify()["status"] == "STABLE"
@@ -73,6 +75,27 @@ def test_matching_git_source_without_manifest_is_not_installed_readiness(source_
     assert report["matched_version"] == "continuation_2026-11-19"
     assert report["installed_manifest"] == "MISSING"
     assert report["git_checkout_marker_present"] is True
+
+
+def test_designated_current_source_keeps_previous_reviewed_version_distinct(source_fixture):
+    project, _, after, reference = source_fixture
+    version = "cutover_candidate"
+    candidate = {**after, "KE_DAILY_PAPER.py": b"RECONCILED = True\n"}
+    reference["versions"][version] = {
+        "commit": "3" * 40, "sha256": {name: digest(raw) for name, raw in candidate.items()}
+    }
+    reference["current_version"] = version
+
+    install_sources(project, after)
+    previous = audit.source_report(project, audit.Snapshot({"source": project}), reference)
+    assert previous["matched_version"] == "continuation_2026-11-19"
+    assert previous["matches_current_reference"] is False
+
+    install_sources(project, candidate)
+    current = audit.source_report(project, audit.Snapshot({"source": project}), reference)
+    assert current["matched_version"] == version
+    assert current["matches_current_reference"] is True
+    assert current["different_from_continuation"] == []
 
 
 def test_forged_self_manifest_cannot_establish_reviewed_source(source_fixture):
@@ -225,9 +248,10 @@ def test_utc_calendar_includes_dst_and_half_day_cutoffs_without_runtime_tzdata()
     assert calendar["source_sha256"] == digest(source.replace(b"\r\n", b"\n"))
 
 
-def test_reviewed_runtime_inventory_matches_the_continuation_sources():
+def test_reviewed_runtime_inventory_matches_the_cutover_candidate_sources():
     reference = json.loads((SCRIPT.parent / "source_reference.json").read_text())
-    current = reference["versions"]["continuation_2026-11-19"]
-    assert current["commit"] == "ee858675b50e8bf3ada00bd2bb7a80820a3cf028"
+    assert reference["current_version"] == "cutover_candidate_2026-11-19"
+    current = reference["versions"][reference["current_version"]]
+    assert re.fullmatch(r"[0-9a-f]{40}", current["commit"])
     for rel, expected in current["sha256"].items():
         assert digest((ROOT / rel).read_bytes().replace(b"\r\n", b"\n")) == expected, rel
