@@ -221,7 +221,8 @@ def test_utc_calendar_includes_dst_and_half_day_cutoffs_without_runtime_tzdata()
     assert days["2026-11-19"]["processing_start"] == "2026-11-19T22:40:00+00:00"
     assert days["2026-11-27"]["processing_start"] == "2026-11-27T19:40:00+00:00"
     assert days["2026-11-27"]["due"] == "2026-11-27T20:20:00+00:00"
-    assert calendar["source_sha256"] == digest((ROOT / "tradingagents/paper/autopilot/daily_sessions.json").read_bytes())
+    source = (ROOT / "tradingagents/paper/autopilot/daily_sessions.json").read_bytes()
+    assert calendar["source_sha256"] == digest(source.replace(b"\r\n", b"\n"))
 
 
 def test_reviewed_runtime_inventory_matches_the_continuation_sources():

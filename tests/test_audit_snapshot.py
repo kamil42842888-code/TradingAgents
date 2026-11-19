@@ -4,6 +4,7 @@ import importlib.util
 import json
 import os
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -81,6 +82,20 @@ def test_changed_content_is_detected_even_after_mtime_restored(tmp_path):
     result = view.verify()
     assert result["status"] == "CONCURRENT_CHANGE_RETRY"
     assert result["changed_categories"] == ["data"]
+
+
+def test_stable_file_with_preserved_modification_time(tmp_path):
+    path = tmp_path / "copied-record.json"
+    path.write_bytes(b'{"before": true}')
+    if os.name == "nt":
+        # Ensure creation and change times fall in different Windows clock ticks.
+        time.sleep(0.05)
+    path.write_bytes(b"{}")
+    prior_timestamp = 1_700_000_000_000_000_000
+    os.utime(path, ns=(prior_timestamp, prior_timestamp))
+    view = Snapshot({"data": tmp_path})
+    assert view.read(path) == b"{}"
+    assert view.verify()["status"] == "STABLE"
 
 
 def test_second_read_cannot_replace_first_snapshot(tmp_path):

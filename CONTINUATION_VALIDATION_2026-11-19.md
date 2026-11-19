@@ -81,10 +81,50 @@ python -m pytest -q tests/test_audit_snapshot.py tests/test_workstation_audit.py
 | Windows launcher | 12 cases collected and skipped on Linux; tests cover metadata variants, redaction, missing interpreter, protected/reused outputs, junctions and concurrent-change exit propagation |
 | Ruff and patch whitespace | Passed for the audit Python sources/tests and patch |
 
-The current total of unexecuted Windows cases is **18**, not six. Mocked Windows
-execution, once available, still will not establish the actual migrated PC's
-schedule, account health or completed sessions. The read-only audit must be run
-against that installation to obtain its local evidence.
+At the end of the Linux run, 18 Windows cases remained. The local Windows run
+below records how many executed. These cases use mocked Scheduler APIs.
+
+## Local Windows validation — 19 November 2026
+
+The workstation review started from the published continuation
+`98dd1eb5b9f48a37ecdc1f3e3834d4cf4d0a813f`. Tests ran on Windows 11 build 26300
+with CPython 3.12.10, pytest 9.2.0 and Windows PowerShell 5.1.26100.9818. An
+isolated virtual environment installed the 91 project and `dev` dependencies
+from `pyproject.toml`, and `uv pip check` passed. Setuptools could not build an
+editable wheel because the managed Windows profile path contains braces. The
+suite imported the reviewed checkout in place.
+
+```powershell
+python -m pytest -q -rs --basetemp ..\fresh-windows-fixtures tests/test_audit_snapshot.py tests/test_workstation_audit.py tests/test_workstation_evidence.py tests/test_windows_audit_wrapper.py tests/test_windows_task_status.py
+```
+
+Use a new writable fixture directory for each run.
+
+| Source and fixture location | Passed | Failed | Skipped |
+|---|---:|---:|---:|
+| Published audit commit, managed Windows temporary directory | 67 | 24 | 4 |
+| Published audit commit, fresh workspace fixture directory | 77 | 14 | 4 |
+| Windows audit fixes in this continuation, fresh workspace fixture directory | 91 | 1 | 4 |
+
+The managed temporary directory caused Windows PowerShell to reject the mock
+scripts with `AuthorizationManager check failed`. Moving synthetic fixtures to
+the workspace let 15 of the 18 Windows cases execute and pass under the same
+execution policy. The audit snapshot now compares like-for-like timestamps
+within each filesystem API and uses comparable metadata across the path and
+open handle. Windows can return creation time from `lstat()` and change time
+from `fstat()` for the same unchanged file. The regression covers a file copied
+with its original modification time. The calendar test hashes the canonical LF
+form of the checked-out source so Git's CRLF conversion does not change it.
+
+| Remaining case | Count | Observed reason |
+|---|---:|---|
+| Snapshot symbolic-link fixture | 1 skipped | Native Windows symbolic-link creation returned WinError 1314, required privilege absent |
+| Launcher junction fixtures for project, private data, and review root | 3 skipped | Native Windows junction creation returned Access denied for fresh workspace fixtures |
+| Actual V3 producer compatibility fixture | 1 failed | V3's immutable archive publication requires `os.link()`. Native hard-link creation returned WinError 5 both in the fixture and with an independent workspace file |
+
+The fixture link checks remain in place. Changed Python files passed Ruff
+0.17.6, and `git diff --check` passed. The remaining native link cases require
+a Windows environment permitted to create those links in its test directory.
 
 ## Runtime used
 

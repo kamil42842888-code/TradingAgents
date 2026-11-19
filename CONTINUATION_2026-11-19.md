@@ -194,3 +194,21 @@ After the reviewed continuation is installed, its controller inspection is:
 Optional `--operations-root` and an aware `--as-of` timestamp are available only
 for `--status`, permitting offline inspection of copied operation records. They
 cannot redirect a tick, activation, probe or disarm operation.
+
+## Windows follow-up
+
+The isolated Windows run exposed a false concurrent-change finding when the
+path and open handle returned different Windows `ctime` values for the same
+file. The audit now compares timestamps using their documented meanings and
+retains its file identity, content and same-API stability checks. The calendar
+test also accepts the CRLF checkout of the pinned LF source. The local Windows
+results and remaining native fixture restrictions are in the
+[validation record](CONTINUATION_VALIDATION_2026-11-19.md#local-windows-validation--19-november-2026).
+
+The repaired launcher wrote all four reports against verified migration copies
+with stable inputs. That run documented archived source and paper evidence.
+The expected restored project and profile data directories were absent from
+the searched workstation paths, and Scheduler lookup was unavailable in the
+managed session. Completion of the migration and any activation still require
+the existing source, exposure, backup and single-workstation cutover checks.
+Workstation paths, task metadata and evidence reports were kept local.

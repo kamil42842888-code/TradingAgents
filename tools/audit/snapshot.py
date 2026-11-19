@@ -50,13 +50,18 @@ def _absolute(path: Path) -> Path:
         raise AuditReadError("INVALID_PATH") from None
 
 
-def _signature(info, *, directory_contents: bool = False):
+def _signature(info, *, directory_contents: bool = False, path_and_handle: bool = False):
     if info is None:
         return None
     identity = (info.st_dev, info.st_ino, stat.S_IFMT(info.st_mode))
     if stat.S_ISDIR(info.st_mode) and not directory_contents:
         return identity
-    return (*identity, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+    # Windows can return different ctime meanings for a path and an open handle.
+    # Keep ctime when comparing like with like, and use creation time across APIs.
+    metadata_time = info.st_ctime_ns
+    if path_and_handle and os.name == "nt":
+        metadata_time = getattr(info, "st_birthtime_ns", None)
+    return (*identity, info.st_size, info.st_mtime_ns, metadata_time)
 
 
 def _strict_object(pairs):
@@ -152,11 +157,12 @@ class Snapshot:
         signature = _signature(before)
         try:
             with path.open("rb") as stream:
-                if _signature(os.fstat(stream.fileno())) != signature:
+                opened = os.fstat(stream.fileno())
+                if _signature(opened, path_and_handle=True) != _signature(before, path_and_handle=True):
                     self._changed.add(path)
                     raise AuditReadError("CONCURRENT_CHANGE")
                 raw = stream.read(limit + 1)
-                if _signature(os.fstat(stream.fileno())) != signature:
+                if _signature(os.fstat(stream.fileno())) != _signature(opened):
                     self._changed.add(path)
                     raise AuditReadError("CONCURRENT_CHANGE")
         except OSError:
