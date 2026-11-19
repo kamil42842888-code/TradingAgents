@@ -2,7 +2,10 @@
 
 ## Scope and result
 
-**155 tests passed; 6 Windows-only cases skipped on Linux**, in 4.24 seconds.
+The initial runtime suite recorded **155 tests passed; 6 Windows-only cases
+skipped on Linux**, in 4.24 seconds. The subsequent standalone audit suite
+recorded **77 passed; 18 Windows-only cases skipped**, in 2.66 seconds; this
+includes the same six task-status cases plus twelve new launcher cases.
 These are isolated engineering tests, not genuine forward-paper performance.
 The checkout starts from the verified recovery branch at
 `95bce9dda270d5c07e732131390d2af2cc2e006d`.
@@ -41,8 +44,9 @@ explicitly approved publishing the prepared changes, and the authenticated
 GitHub connector created the branch and draft PR. The earlier publication block
 is resolved. The initial published tree is
 `12b0aa6f50cbb594347ba4860713c18a39733311`, identical to the tested local tree.
-The follow-up changes only documentation and the nonvacuous task-row assertion;
-they do not change production runtime behavior.
+The first follow-up changed only documentation and the nonvacuous task-row
+assertion. The subsequent standalone audit adds separate diagnostic tools and
+tests; production runtime behavior remains unchanged.
 
 The CI blocker is visible at the repository's
 [Actions page](https://github.com/kamil42842888-code/TradingAgents/actions).
@@ -50,6 +54,37 @@ The available connector cannot re-enable workflows, and the browser session is
 not signed in. A repository maintainer can restore Actions, or a local isolated
 Windows checkout can run the command above. Neither route was completed in this
 session; the six Windows cases remain unverified.
+
+## Standalone workstation audit continuation
+
+The new `tools/audit` bundle is independent of the target application and uses
+only the Python standard library. It is run with `-I -S -B`; its timing data is
+precomputed from the existing pinned session calendar, so installed `tzdata`
+or other site packages are not required for the audit.
+
+At 15:58 UTC, the combined focused audit command completed with **77 passed,
+18 Windows-only skipped in 2.66 seconds**:
+
+```text
+python -m pytest -q tests/test_audit_snapshot.py tests/test_workstation_audit.py tests/test_workstation_evidence.py tests/test_windows_audit_wrapper.py tests/test_windows_task_status.py
+```
+
+| Check | Observed result |
+|---|---|
+| Standard-library audit core and CLI | Passed, including an isolated `-I -S -B` subprocess and a target package whose import would create a sentinel file; the target code remained unexecuted |
+| Reviewed source versus self-supplied manifest | Distinguished older reviewed source, current reviewed source, matching Git source without installation manifest, unreviewed source, and extra application modules |
+| Private input/report boundaries | Environment files, balances, sign-in identifiers, raw task arguments and arbitrary error/model text were not exported; malicious manifest entries could not request environment-file reads |
+| Stable reader | Detected changed content, replaced/missing/new files, changed inventories and redirects; rejected duplicate/nonfinite JSON and bounded oversized inputs |
+| Actual producer compatibility | Actual temporary V3 creation, bootstrap, supervisor tick and Observer heartbeat serialization passed reconciliation; zero research companies and a fake capture subprocess |
+| Historical migration evidence | Missing older market, calendar/archive or accepted-report bytes prevented a consistency result, including references before the configured effective session |
+| Current controls and heartbeats | Missing/stale/future/failed heartbeats and unsuitable current control declarations remained separate from historical session evidence and prevented an overall consistency result |
+| Windows launcher | 12 cases collected and skipped on Linux; tests cover metadata variants, redaction, missing interpreter, protected/reused outputs, junctions and concurrent-change exit propagation |
+| Ruff and patch whitespace | Passed for the audit Python sources/tests and patch |
+
+The current total of unexecuted Windows cases is **18**, not six. Mocked Windows
+execution, once available, still will not establish the actual migrated PC's
+schedule, account health or completed sessions. The read-only audit must be run
+against that installation to obtain its local evidence.
 
 ## Runtime used
 

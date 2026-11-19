@@ -122,8 +122,23 @@ own branch/worktree workflow; the non-Git recovery installer deliberately refuse
 ## Next workstation task
 
 The next step is to reconcile the actual migrated Windows installation, not to
-run another research batch immediately. The following is the precise local
-Codex handover:
+run another research batch immediately. A standalone audit now performs that
+read-only reconciliation in one command. Run
+`tools/audit/Invoke_Koral_ReadOnly_Audit.ps1` from the separate reviewed checkout,
+with the actual `-Project` and `-DataRoot` paths. Its Python auditor does not
+import the target application or load its environment files. It reports source
+provenance, task definitions, controller/Observer heartbeats, current control
+declarations, due-session evidence and historical ledger-bound files, including
+archives predating the effective session. Outputs are sanitized and stay in a
+new local report directory.
+
+See [the audit instructions and complete local Codex task](tools/audit/README.md).
+The standalone audit is distributed in the reviewed Git checkout; it does not
+require installing the source-update package first. Its Python checks passed
+on Linux, including compatibility with actual temporary V3/supervisor/Observer
+producer output. The Windows launcher cases still require Windows execution.
+
+The following is the local continuation handover:
 
 > Continue Koral Equities from the reviewed 19 November continuation. First read
 > draft PR #3, this document, `CONTINUATION_VALIDATION_2026-11-19.md` and the
@@ -134,6 +149,10 @@ Codex handover:
 > if present, active processes and the two Koral Equities task definitions.
 > Preserve unrelated Koral Quant, Research Lab and Control Panel work. Compare
 > source against the reviewed commit; do not overwrite unknown local changes.
+> Run the standalone read-only audit from the reviewed checkout and retain
+> `SUMMARY.md`, `audit.json`, `tasks.json` and `launcher.json` locally. Use the
+> report to target the next inspection; do not infer completeness from a summary
+> alone. Its local consistency status does not verify accounting or returns.
 >
 > Read the effective session, controller/Observer heartbeats, dated rosters,
 > earnings and market observations, summaries, model-usage/attempt receipts, and

@@ -10,11 +10,15 @@ on:
       - 'Register_Koral_Tasks.ps1'
       - 'Verify_Koral_Recovery.py'
       - 'tools/recovery/**'
+      - 'tools/audit/**'
       - 'tests/test_daily*'
       - 'tests/test_forward_source_continuity.py'
       - 'tests/test_paper_forward_integration.py'
       - 'tests/test_recovery*'
       - 'tests/test_windows_task_status.py'
+      - 'tests/test_audit_snapshot.py'
+      - 'tests/test_workstation*'
+      - 'tests/test_windows_audit_wrapper.py'
       - '.github/workflows/koral-daily-paper.yml'
   workflow_dispatch:
 
@@ -55,3 +59,7 @@ jobs:
           tests/test_windows_task_status.py
           tests/test_recovery_build.py
           tests/test_paper_forward_integration.py
+          tests/test_audit_snapshot.py
+          tests/test_workstation_audit.py
+          tests/test_workstation_evidence.py
+          tests/test_windows_audit_wrapper.py
