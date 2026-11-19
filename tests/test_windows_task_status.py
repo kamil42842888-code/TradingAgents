@@ -26,7 +26,7 @@ function Get-ScheduledTask {
     if ($Scenario -eq 'unavailable') { throw 'Scheduler unavailable fixture' }
     if ($Scenario -eq 'absent') { return }
     foreach ($entry in @(
-        @('KoralEquities_ResearchObserver_5min', 'KE_Observer_Scheduler_2026-10-26.py', '--run-once'),
+        @('koralequities_researchobserver_5min', 'KE_Observer_Scheduler_2026-10-26.py', '--run-once'),
         @('KoralEquities_PaperController_5min', 'KE_DAILY_PAPER.py', '--tick')
     )) {
         $projectPath = $FixtureProject

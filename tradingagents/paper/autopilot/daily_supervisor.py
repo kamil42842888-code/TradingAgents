@@ -227,7 +227,9 @@ def _tick(
                 else:
                     # Validate before adopting a new watchlist. Preserve every
                     # active symbol. Frozen selection is not trade permission.
-                    paper_bridge.inspect_sources(observer, day, record["watchlist"], instant)
+                    source, _ = paper_bridge.inspect_sources(
+                        observer, day, record["watchlist"], instant
+                    )
                     daily_roster.adopt(ledger, day, record, root=root)
                     cfg_for_research = dict(cfg)
                     output = paper_forward.run_once(
@@ -253,6 +255,7 @@ def _tick(
                         "status": "FORWARD_SESSION_PROCESSED",
                         "last_execution": output,
                         "research_receipts": receipts,
+                        "research_eligibility": source["tickers"],
                         "last_mark": state.portfolio.book.last_session,
                         "equity_gbp": state.portfolio.book.equity(),
                         "cash_gbp": state.portfolio.book.cash_gbp,
@@ -305,15 +308,26 @@ def tick(project: Path, **kwargs) -> dict:
         summary["data_complete"] = (
             not result.get("missing_sources") and result["status"] == "FORWARD_SESSION_PROCESSED"
         )
+        from .performance import scorecard
         from .state import STATE, read
 
         state = read(kwargs.get("ledger") or STATE)
+        book = state.portfolio.book
+        equity = book.equity()
         summary.update(
             cash_gbp=state.portfolio.book.cash_gbp,
             equity_gbp=state.portfolio.book.equity(),
             positions=state.portfolio.book.positions,
             orders=state.portfolio.book.orders,
             conditional_plans=state.portfolio.intents,
+            performance=scorecard(book),
+            risk={
+                "gross_exposure_gbp": round(equity - book.cash_gbp, 2),
+                "gross_exposure_fraction": (equity - book.cash_gbp) / equity if equity > 0 else None,
+                "limits": dict(book.rules),
+                "halted": book.halted,
+                "valuation_session": book.last_session,
+            },
             research_receipts={
                 k: v for k, v in state.ai_receipts.items() if k.startswith(day + ":")
             },

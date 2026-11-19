@@ -5,6 +5,7 @@ import hashlib
 import json
 import subprocess
 import zipfile
+from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -24,6 +25,8 @@ FILES = [
     "tools/recovery/build_release.py",
     "tools/recovery/release_history.json",
     "tools/recovery/restore_sources.py",
+    "tradingagents/paper/swing_scan.py",
+    "tradingagents/paper/dashboard.py",
     *[
         "tradingagents/paper/autopilot/" + name
         for name in (
@@ -40,6 +43,8 @@ FILES = [
             "runner.py",
             "feeds.py",
             "live_dry_run.py",
+            "rehearsal.py",
+            "state.py",
         )
     ],
     *[
@@ -57,6 +62,13 @@ FILES = [
             "test_daily_status_cli.py",
             "test_windows_task_status.py",
             "test_recovery_build.py",
+            "test_autopilot_feeds.py",
+            "test_autopilot_rehearsal.py",
+            "test_autopilot_dashboard.py",
+            "test_swing_scan.py",
+            "test_chatgpt_auth.py",
+            "test_cli_updates.py",
+            "test_ledger_replace.py",
         )
     ],
 ]
@@ -106,14 +118,16 @@ def base_tree() -> dict[str, str]:
     return result
 
 
-def build(destination: Path):
+def build(destination: Path, release: str = RELEASE):
+    if date.fromisoformat(release).isoformat() != release:
+        raise ValueError("Release must be a canonical ISO date")
     tree = base_tree()
     history = json.loads((ROOT / "tools/recovery/release_history.json").read_text())
     files = {rel: (ROOT / rel).read_bytes().replace(b"\r\n", b"\n") for rel in FILES}
     docs = {rel: (ROOT / rel).read_bytes() for rel in DOCS}
     manifest = {
         "schema": "ke-manual-source-recovery-v1",
-        "release": RELEASE,
+        "release": release,
         "base_commit": BASE,
         "files": {r: sha(b) for r, b in files.items()},
         "known_sha256": history["known_sha256"],
@@ -150,7 +164,7 @@ def build(destination: Path):
         raise ValueError("Recovery installer manifest placeholder is missing or ambiguous")
     installer = installer.replace(b"BUILD_REPLACES_MANIFEST_SHA256", sha(raw_manifest).encode())
     destination.mkdir(parents=True, exist_ok=True)
-    target = destination / ("Koral_Equities_Recovery_" + RELEASE + ".zip")
+    target = destination / f"Koral_Equities_Recovery_{release}.zip"
     with zipfile.ZipFile(target, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         archive.writestr("Koral_Recovery/restore_sources.py", installer)
         archive.writestr("Koral_Recovery/MANIFEST.json", raw_manifest)
@@ -177,4 +191,6 @@ def build(destination: Path):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, required=True)
-    build(parser.parse_args().output)
+    parser.add_argument("--release", default=RELEASE)
+    args = parser.parse_args()
+    build(args.output, args.release)

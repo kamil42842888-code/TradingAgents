@@ -27,6 +27,11 @@ TESTS = [
     "tests/test_daily_status_cli.py",
     "tests/test_windows_task_status.py",
     "tests/test_recovery_build.py",
+    "tests/test_autopilot_feeds.py",
+    "tests/test_autopilot_rehearsal.py",
+    "tests/test_autopilot_dashboard.py",
+    "tests/test_swing_scan.py",
+    "tests/test_ledger_replace.py",
 ]
 
 
@@ -67,12 +72,14 @@ def main():
         return 0
     # Isolate before importing the application or pytest, including child processes.
     sandbox = Path(tempfile.mkdtemp(prefix="ke-validation-"))
+    home = sandbox / "home"
+    home.mkdir()
     for key in list(os.environ):
         if any(word in key for word in ("API_KEY", "ACCESS_TOKEN", "SECRET_KEY")):
             del os.environ[key]
     os.environ.update(
-        USERPROFILE=str(sandbox),
-        HOME=str(sandbox),
+        USERPROFILE=str(home),
+        HOME=str(home),
         DOTENV_DISABLED="1",
         PYTHONDONTWRITEBYTECODE="1",
         PYTEST_DISABLE_PLUGIN_AUTOLOAD="1",

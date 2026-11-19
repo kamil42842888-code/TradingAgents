@@ -33,7 +33,7 @@ if ($Mode -eq 'Status') {
         exit 2
     }
     foreach ($definition in $definitions) {
-        $task = $available | Where-Object { $_.TaskName -ceq $definition.Name } | Select-Object -First 1
+        $task = $available | Where-Object { $_.TaskName -ieq $definition.Name } | Select-Object -First 1
         if ($null -eq $task) {
             $rows += [ordered]@{ name=$definition.Name; present=$false; findings=@('TASK_ABSENT') }
             continue

@@ -20,7 +20,7 @@ import re
 import sys
 import tempfile
 from collections import Counter
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 from tradingagents.paper import discovery
@@ -75,7 +75,7 @@ def _price_candidate(ticker: str, rows: list[tuple[str, float, float]],
         return None, "insufficient_completed_history"
     try:
         dates = [date.fromisoformat(record[0]) for record in rows]
-        if (any(record[0] != day.isoformat() for record, day in zip(rows, dates))
+        if (any(record[0] != day.isoformat() for record, day in zip(rows, dates, strict=True))
                 or dates != sorted(set(dates)) or dates[-1].isoformat() != session):
             return None, "missing_or_future_completed_session"
         if any(len(record) != 3 or not _finite_positive(record[1]) or
@@ -86,7 +86,7 @@ def _price_candidate(ticker: str, rows: list[tuple[str, float, float]],
     prices = [r[1] for r in rows]
     volumes = [r[2] for r in rows]
     close = prices[-1]
-    avg_dollar = sum(a*b for a, b in zip(prices[-20:], volumes[-20:])) / 20
+    avg_dollar = sum(a*b for a, b in zip(prices[-20:], volumes[-20:], strict=True)) / 20
     if close < rules.min_price_usd:
         return None, "price_below_floor"
     if avg_dollar < rules.min_avg_daily_dollar_volume_usd:
@@ -150,8 +150,8 @@ def _earnings_preview(observation: object, session: str, requested_at: datetime,
         nxt = date.fromisoformat(observation.next_earnings_date)
         observed = datetime.fromisoformat(observation.observed_at_utc)
         if (observed.tzinfo is None or observed.utcoffset() != timedelta(0) or
-                observed.astimezone(timezone.utc) < requested_at.astimezone(timezone.utc) - timedelta(minutes=2) or
-                observed.astimezone(timezone.utc) > checked_at.astimezone(timezone.utc) or
+                observed.astimezone(UTC) < requested_at.astimezone(UTC) - timedelta(minutes=2) or
+                observed.astimezone(UTC) > checked_at.astimezone(UTC) or
                 last >= nxt or last > day or nxt <= day):
             return None, "invalid_earnings_preview_provenance"
         if (nxt - effective).days <= 7 or (effective - last).days <= 2:
@@ -187,7 +187,7 @@ def build_queue(*, home: Path = HOME, now: datetime | None = None,
             type(shortlist_size) is not int or not 1 <= shortlist_size <= 8 or
             type(max_earnings_checks) is not int or not 1 <= max_earnings_checks <= 80):
         raise ValueError("Invalid bounded Swing Alpha scanning parameters")
-    current = now if now is not None else datetime.now(timezone.utc)
+    current = now if now is not None else datetime.now(UTC)
     if current.tzinfo is None or current.utcoffset() is None:
         raise ValueError("Scan timestamp must be timezone aware")
     session = feeds.session_cutoff(current, "close")  # only after 17:40 NY
@@ -220,11 +220,13 @@ def build_queue(*, home: Path = HOME, now: datetime | None = None,
     by_sector = Counter()
     if profile_source is None:
         from tradingagents.dataflows.vendor_gateway import get_yahoo_ticker
-        profile_source = lambda ticker: get_yahoo_ticker(ticker.replace(".", "-")).info
-    clock = completion_clock or (lambda: datetime.now(timezone.utc))
+        def profile_source(ticker):
+            return get_yahoo_ticker(ticker.replace(".", "-")).info
+    clock = completion_clock or (lambda: datetime.now(UTC))
     profiles_checked = 0
     earnings_checked = 0
     earnings_ok = 0
+    earnings_source_failures = Counter()
     earnings_fn = earnings_source or feeds.earnings_for
     for row in ordered[:max_profiles]:
         profiles_checked += 1
@@ -244,23 +246,26 @@ def build_queue(*, home: Path = HOME, now: datetime | None = None,
         earnings_checked += 1
         try:
             snapshot = earnings_fn(row["ticker"], session, current)
+            if getattr(snapshot, "verified", None) is not True:
+                earnings_source_failures[str(getattr(snapshot, "source", "UNKNOWN"))[:100]] += 1
             observed = clock()
             if observed.tzinfo is None or observed.utcoffset() is None:
                 raise ValueError("Preview collection completion clock must be timezone aware")
             preview, reason = _earnings_preview(snapshot, session, current, observed)
         except Exception as exc:
             preview, reason = None, "earnings_preview_source_failed_" + type(exc).__name__
+            earnings_source_failures[reason] += 1
         if preview is None:
             exclude[reason] += 1
             continue
         earnings_ok += 1
         if observed.tzinfo is None or observed.utcoffset() is None:
             raise ValueError("Profile collection completion clock must be timezone aware")
-        if observed.astimezone(timezone.utc) < current.astimezone(timezone.utc):
+        if observed.astimezone(UTC) < current.astimezone(UTC):
             raise ValueError("Profile timestamp precedes scan start")
         shortlist.append({
             **row, **profile,
-            "profile_observed_utc": observed.astimezone(timezone.utc).isoformat(),
+            "profile_observed_utc": observed.astimezone(UTC).isoformat(),
             "earnings_verification": "NOT_CAPTURED_FOR_NEXT_SESSION",
             "earnings_preview": preview,
             "execution_authority": "NONE_RESEARCH_ONLY",
@@ -275,7 +280,7 @@ def build_queue(*, home: Path = HOME, now: datetime | None = None,
         finish_session = feeds.session_cutoff(finished, "close")
     except ValueError as exc:
         raise ValueError("Full scan did not complete in the same NY close window") from exc
-    if (finished.astimezone(timezone.utc) < current.astimezone(timezone.utc) or
+    if (finished.astimezone(UTC) < current.astimezone(UTC) or
             finish_session != session):
         raise ValueError("Full scan did not complete in the same NY close window")
     result = {
@@ -287,8 +292,8 @@ def build_queue(*, home: Path = HOME, now: datetime | None = None,
             "Prior-session secondary-calendar previews are not future-session earnings approval."
         ),
         "session": session,
-        "scan_started_utc": current.astimezone(timezone.utc).isoformat(),
-        "generated_utc": finished.astimezone(timezone.utc).isoformat(),
+        "scan_started_utc": current.astimezone(UTC).isoformat(),
+        "generated_utc": finished.astimezone(UTC).isoformat(),
         "listing_universe_total": len(set(names)),
         "earliest_next_weekday": _next_weekday(session),
         "next_weekday_is_not_holiday_certified": True,
@@ -300,6 +305,7 @@ def build_queue(*, home: Path = HOME, now: datetime | None = None,
         "profiles_considered": profiles_checked,
         "earnings_preview_checks": earnings_checked,
         "earnings_preview_accepted": earnings_ok,
+        "earnings_source_failures": dict(sorted(earnings_source_failures.items())),
         "earnings_preview_policy": "TWO_SECONDARY_CONSENSUS_PREVIEW_NOT_NEXT_SESSION_AUTHORITY",
         "selection_rotates_by_session": bool(max_symbols and len(chosen) < len(set(names))),
         "complete_daily_universe_coverage": len(chosen) == len(set(names)),
@@ -317,12 +323,16 @@ def build_queue(*, home: Path = HOME, now: datetime | None = None,
             "portfolio gates independently before any AI-to-paper execution."
         ),
     }
-    # A failed/no-candidate scan never masquerades as a successfully selected
-    # universe; persist audit only if the selection was actually possible.
+    # Preserve failed-screen evidence separately. Only queue.json can nominate
+    # a future roster; a diagnostic file never grants selection authority.
+    failure = None
     if not ordered:
-        raise ValueError("No eligible completed-session price series; source or coverage failure")
-    if not shortlist:
-        raise ValueError("No candidates passed the earnings-preview screen; fail closed")
+        failure = "No eligible completed-session price series; source or coverage failure"
+    elif not shortlist:
+        failure = "No candidates passed the earnings-preview screen; fail closed"
+    if failure:
+        result.update(status="SCAN_REJECTED_NO_TRADE_AUTHORITY", failure_reason=failure)
+        target = target.with_name("rejected.json")
     target.parent.mkdir(parents=True, exist_ok=True)
     payload = (json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n").encode()
     fd, temp_path = tempfile.mkstemp(prefix=".swing-scan-", suffix=".tmp", dir=target.parent)
@@ -337,6 +347,8 @@ def build_queue(*, home: Path = HOME, now: datetime | None = None,
             raise ValueError("Concurrent scan wrote this immutable session") from None
     finally:
         Path(temp_path).unlink(missing_ok=True)
+    if failure:
+        raise ValueError(failure)
     return result
 
 

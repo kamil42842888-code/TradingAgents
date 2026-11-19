@@ -34,6 +34,27 @@ def configure(tmp_path, ledger, day=NEXT):
     return ops
 
 
+def test_waiting_then_processing_records_first_success_once(account, tmp_path, monkeypatch):
+    ledger, observer = account
+    ops = configure(tmp_path, ledger)
+    completed = at(NEXT, 18, 5)
+    monkeypatch.setattr(s, "utcnow", lambda: completed)
+    options = {"root": ops, "ledger": ledger, "observer": observer, "verify_sources": False}
+    sup.tick(tmp_path, now=at(NEXT, 16), **options)
+    sources(observer, NEXT)
+    sup.tick(tmp_path, now=at(NEXT, 18), **options)
+    first = s.read_json(ops / "summaries" / (NEXT + ".json"))
+    assert first["first_processed_utc"] == s.utc(completed).isoformat()
+    assert first["research_eligibility"]["TWST"]["eligible_for_research"] is True
+    assert first["performance"]["closed_trades"] == 0
+    assert first["risk"]["gross_exposure_gbp"] == 0
+    assert first["risk"]["valuation_session"] == NEXT
+    monkeypatch.setattr(s, "utcnow", lambda: at(NEXT, 19))
+    sup.tick(tmp_path, now=at(NEXT, 19), **options)
+    second = s.read_json(ops / "summaries" / (NEXT + ".json"))
+    assert second["first_processed_utc"] == first["first_processed_utc"]
+
+
 def test_repeated_supervisor_polls_mark_once_and_preserve_summary(account, tmp_path, monkeypatch):
     ledger, observer = account
     ops = configure(tmp_path, ledger)
