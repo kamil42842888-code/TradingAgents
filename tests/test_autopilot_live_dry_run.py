@@ -164,9 +164,11 @@ def test_output_never_overwrites_rehearsal_or_paper_state(tmp_path):
 
 
 def test_ai_receipt_from_real_call_is_report_hash_bound_but_never_submitted(tmp_path):
+    from tests.test_autopilot_decision import execution_block
     home = saved(tmp_path, tickers=["AAPL", "MSFT", "NVDA"])
     pm = ("Rating: Overweight. Initiate after TWO consecutive closes above $205.00. "
-          "Use a firm stop-loss at $190.00 for the paper trade.")
+          "Use a firm stop-loss at $190.00 for the paper trade.\n"
+          + execution_block(trigger_usd="205.00", stop_usd="190.00"))
     trader = "**Stop Loss**: $190.00"
     received = []
     def fake_ai(_graph, *, ticker, session, bar, root, state):

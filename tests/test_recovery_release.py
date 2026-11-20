@@ -51,12 +51,18 @@ def test_source_restore_preserves_account_config_env_and_is_idempotent(installat
     project, home, manifest, files, ledger = installation
     cfg = home / ".tradingagents/paper_operations/daily_v1/config.json"
     s.atomic_json(cfg, {"armed": False, "other": "preserve"})
-    protected = {p: p.read_bytes() for p in (cfg, ledger, project / ".env")}
+    package_overlay = project / ".venv/Lib/site-packages/yahoo-repair-versions.json"
+    s.atomic_json(package_overlay, {"yfinance": "1.8.0", "curl_cffi": "0.17.0"})
+    protected = {p: p.read_bytes() for p in (cfg, ledger, project / ".env", package_overlay)}
     check = recovery.inspect(project, home, manifest, files)
     backup = recovery.restore(project, check, files)
     assert (backup / "support.py").read_bytes() == b"VALUE = 1\n"
     assert all(p.read_bytes() == raw for p, raw in protected.items())
     assert set(recovery.inspect(project, home, manifest, files)["statuses"].values()) == {"CURRENT"}
+    installed_manifest = (project / "KE_DAILY_SOURCE_MANIFEST.json").read_bytes()
+    recovery.restore(project, recovery.inspect(project, home, manifest, files), files)
+    assert (project / "KE_DAILY_SOURCE_MANIFEST.json").read_bytes() == installed_manifest
+    assert all(p.read_bytes() == raw for p, raw in protected.items())
     assert not (project / recovery.TRANSACTION).exists()
 
 

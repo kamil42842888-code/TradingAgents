@@ -55,6 +55,27 @@ def test_waiting_then_processing_records_first_success_once(account, tmp_path, m
     assert second["first_processed_utc"] == first["first_processed_utc"]
 
 
+def test_repeated_processing_preserves_existing_offset_timestamp(account, tmp_path, monkeypatch):
+    """Normalizing new receipts must not rewrite an already recorded instant."""
+    ledger, observer = account
+    ops = configure(tmp_path, ledger)
+    completed = at(NEXT, 18, 5)
+    monkeypatch.setattr(s, "utcnow", lambda: completed)
+    options = {"root": ops, "ledger": ledger, "observer": observer, "verify_sources": False}
+    sources(observer, NEXT)
+    sup.tick(tmp_path, now=at(NEXT, 18), **options)
+    path = ops / "summaries" / (NEXT + ".json")
+    prior = s.read_json(path)
+    prior["first_processed_utc"] = completed.isoformat()
+    s.atomic_json(path, prior)
+    ledger_before = ledger.read_bytes()
+
+    monkeypatch.setattr(s, "utcnow", lambda: at(NEXT, 19))
+    sup.tick(tmp_path, now=at(NEXT, 19), **options)
+    assert s.read_json(path)["first_processed_utc"] == prior["first_processed_utc"]
+    assert ledger.read_bytes() == ledger_before
+
+
 def test_repeated_supervisor_polls_mark_once_and_preserve_summary(account, tmp_path, monkeypatch):
     ledger, observer = account
     ops = configure(tmp_path, ledger)

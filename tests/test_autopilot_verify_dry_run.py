@@ -1,5 +1,6 @@
 """Cross-platform immutable source audit: no market network or paper account."""
 from __future__ import annotations
+
 import hashlib
 import json
 from datetime import datetime, timezone
@@ -54,6 +55,7 @@ def snapshot(tmp_path: Path) -> Path:
 
 
 def research_output(tmp_path: Path, *, model: bool=False) -> Path:
+    from tests.test_autopilot_decision import execution_block
     observer = snapshot(tmp_path)
     out = tmp_path/"dry_run"
     def fake_ai(_graph, *, ticker, session, bar, root, state):
@@ -64,7 +66,8 @@ def research_output(tmp_path: Path, *, model: bool=False) -> Path:
         source = dest/"source.json"
         source.write_bytes(report.encode())
         pm = ("Rating: Overweight. Buy after TWO consecutive closes above $205.00. "
-              "Use a firm stop-loss at $190.00.")
+              "Use a firm stop-loss at $190.00.\n"
+              + execution_block(trigger_usd="205.00", stop_usd="190.00"))
         trader = "**Stop Loss**: $190.00"
         proposal = AIExecutionProposal(action="CONDITIONAL_LONG",rating="Overweight",
             entry_quote="TWO consecutive closes above $205.00",stop_quote=trader,

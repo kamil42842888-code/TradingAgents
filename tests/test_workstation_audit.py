@@ -248,9 +248,9 @@ def test_utc_calendar_includes_dst_and_half_day_cutoffs_without_runtime_tzdata()
     assert calendar["source_sha256"] == digest(source.replace(b"\r\n", b"\n"))
 
 
-def test_reviewed_runtime_inventory_matches_the_scan_diagnostics_sources():
+def test_reviewed_runtime_inventory_matches_the_forward_execution_sources():
     reference = json.loads((SCRIPT.parent / "source_reference.json").read_text())
-    assert reference["current_version"] == "scan_data_diagnostics_2026-11-20"
+    assert reference["current_version"] == "forward_execution_2026-11-20"
     current = reference["versions"][reference["current_version"]]
     assert re.fullmatch(r"[0-9a-f]{40}", current["commit"])
     for rel, expected in current["sha256"].items():

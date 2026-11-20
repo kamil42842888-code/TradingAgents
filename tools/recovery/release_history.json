@@ -10,7 +10,8 @@
       "fc56920b475074bdeba580497a0fbda50bdf2f91"
     ],
     "Verify_Koral_Recovery.py": [
-      "e7d62e94f8021c6afcca7f769fb64d41e4d418b8"
+      "e7d62e94f8021c6afcca7f769fb64d41e4d418b8",
+      "acad2d34d99aae12ca09702f043c967d4e1fb8f3"
     ],
     "tests/test_daily_paper_integration.py": [
       "0effe198044943c9254da9106cfb9d552bc2db2c"
@@ -19,21 +20,27 @@
       "8b0965ab5437ebe0216a8983fd25370cac30d3b5"
     ],
     "tests/test_daily_supervisor_release.py": [
-      "05f5def2454f66be63753698ab2983732ab8558c"
+      "05f5def2454f66be63753698ab2983732ab8558c",
+      "36a25898b4f187d97fa61a3a31c03903ad006bd0"
     ],
     "tests/test_daily_support.py": [
       "7b818a96ca3ef850f739b3913d770a0429e18abe"
+    ],
+    "tests/test_recovery_build.py": [
+      "61a603a3b380460545f9d2da5fe55a41e9640104"
     ],
     "tests/test_recovery_release.py": [
       "b13c6d75e35be246d4089e89cab294b19fd37444"
     ],
     "tools/recovery/build_release.py": [
       "e8e2328e5e958d1e47a9a26c2f05c2e78b660c3a",
-      "9227b5f5d2bce8a78a2d1bcdb307ad7d31c46b8f"
+      "9227b5f5d2bce8a78a2d1bcdb307ad7d31c46b8f",
+      "6af0fd9dde18202b66cf233452678e81582d3b89"
     ],
     "tools/recovery/release_history.json": [
       "d7dbe368b2b652b2ff131d4bdced37125931637d",
-      "1bd658cf33d25a0c867b94b57d8651f19dd9fe55"
+      "1bd658cf33d25a0c867b94b57d8651f19dd9fe55",
+      "112a3b7880e2db4377a7c54f341d633520285cd2"
     ],
     "tools/recovery/restore_sources.py": [
       "42b7cdac65864b4814cc7d8f07dc089f68c9ef35"
@@ -54,7 +61,8 @@
       "39f754949d0124db2e21197d6a43112ce4c3d091"
     ],
     "tradingagents/paper/autopilot/daily_supervisor.py": [
-      "e003f0c69fb596fef78c69dc1b99a062723bb183"
+      "e003f0c69fb596fef78c69dc1b99a062723bb183",
+      "9ccb1df71487fea8ab2c6d5ae9f63e3bcacddc7e"
     ],
     "tradingagents/paper/autopilot/daily_support.py": [
       "6096a55c0904ea1f0d28879393bebd708ae3b8f8"
@@ -82,6 +90,9 @@
     ],
     "tradingagents/paper/autopilot/paper_forward.py": [
       "a98ccde50dcba977b0c93db224d4dc14279e3866"
+    ],
+    "tradingagents/paper/autopilot/rehearsal.py": [
+      "571d492056e948d61e507d6660c6ec2b0e56c52f"
     ],
     "tradingagents/paper/autopilot/runner.py": [
       "8b64ca30f30e480a937e5c67a42bdbb17fb46a67",

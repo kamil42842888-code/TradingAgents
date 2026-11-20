@@ -264,7 +264,7 @@ def _tick(
                         "orders": state.portfolio.book.orders,
                         "active_symbols": sorted(s.active_symbols(state)),
                         "first_processed_utc": (prior or {}).get("first_processed_utc")
-                        or s.utcnow().isoformat(),
+                        or s.utc(s.utcnow()).isoformat(),
                         "monetary_invoice_cap": False,
                     }
                     s.atomic_json(summary_file, summary)
