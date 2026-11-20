@@ -28,10 +28,12 @@
       "b13c6d75e35be246d4089e89cab294b19fd37444"
     ],
     "tools/recovery/build_release.py": [
-      "e8e2328e5e958d1e47a9a26c2f05c2e78b660c3a"
+      "e8e2328e5e958d1e47a9a26c2f05c2e78b660c3a",
+      "9227b5f5d2bce8a78a2d1bcdb307ad7d31c46b8f"
     ],
     "tools/recovery/release_history.json": [
-      "d7dbe368b2b652b2ff131d4bdced37125931637d"
+      "d7dbe368b2b652b2ff131d4bdced37125931637d",
+      "1bd658cf33d25a0c867b94b57d8651f19dd9fe55"
     ],
     "tools/recovery/restore_sources.py": [
       "42b7cdac65864b4814cc7d8f07dc089f68c9ef35"

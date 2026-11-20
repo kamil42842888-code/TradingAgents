@@ -67,7 +67,8 @@ does not upload them.
 ## What the checks mean
 
 **Source provenance.** The audit checks inventories for the 124-file recovery
-baseline, the 125-file continuation and the reconciled cutover candidate. Both
+baseline, the 125-file continuation, the reconciled cutover candidate and the
+20 November scan diagnostics followup. Both
 LF and CRLF checkouts are recognised. The bundled `source_reference.json` pins
 the runtime bytes for each version and identifies the current candidate. A
 matching earlier version remains identifiable. A self-consistent installed

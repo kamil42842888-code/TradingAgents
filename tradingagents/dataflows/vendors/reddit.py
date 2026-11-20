@@ -225,6 +225,12 @@ def _fetch_subreddit_rss(
         logger.warning("Reddit RSS fetch failed for r/%s · %s: %s", sub, ticker, exc)
         return None
 
+    # A well-formed XML error page is not an empty discussion feed. Only the
+    # supported Atom feed can establish that a successful search found no posts.
+    if root.tag != f"{{{_ATOM_NS['atom']}}}feed":
+        logger.warning("Reddit RSS returned an unsupported feed format for r/%s · %s", sub, ticker)
+        return None
+
     posts = []
     for entry in root.findall("atom:entry", _ATOM_NS)[:limit]:
         title_el = entry.find("atom:title", _ATOM_NS)
