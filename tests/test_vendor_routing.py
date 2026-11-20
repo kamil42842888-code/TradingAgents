@@ -15,7 +15,11 @@ import tradingagents.dataflows.config as config_module
 import tradingagents.default_config as default_config
 from tradingagents.dataflows import router
 from tradingagents.dataflows.config import set_config
-from tradingagents.dataflows.errors import NoMarketDataError
+from tradingagents.dataflows.errors import (
+    NoMarketDataError,
+    VendorNotConfiguredError,
+    VendorUnavailableError,
+)
 
 
 def _reset_config():
@@ -70,6 +74,63 @@ class VendorRoutingTests(unittest.TestCase):
         with self._route({"yfinance": _no_data, "alpha_vantage": _returns("AV_DATA")}):
             result = router.route_to_vendor("get_stock_data", "AAPL", "2026-01-01", "2026-01-10")
         self.assertEqual(result, "AV_DATA")
+
+    def test_sole_vendor_warning_reports_exhaustion(self):
+        for error_type in (VendorUnavailableError, VendorNotConfiguredError):
+            with self.subTest(error_type=error_type):
+                set_config({"data_vendors": {"core_stock_apis": "yfinance"}})
+                unselected = mock.Mock(return_value="UNCHOSEN DATA")
+                with self._route({
+                    "yfinance": _raises(error_type("not available")),
+                    "alpha_vantage": unselected,
+                }), self.assertLogs(router.logger, level="WARNING") as logs:
+                    if error_type is VendorNotConfiguredError:
+                        with self.assertRaises(error_type):
+                            router.route_to_vendor("get_stock_data", "AAPL")
+                    else:
+                        result = router.route_to_vendor("get_stock_data", "AAPL")
+                        self.assertTrue(result.startswith("DATA_UNAVAILABLE"))
+                self.assertEqual(len(logs.output), 1)
+                self.assertIn("configured vendor chain exhausted", logs.output[0])
+                self.assertNotIn("trying next", logs.output[0])
+                unselected.assert_not_called()
+
+    def test_first_vendor_warning_matches_real_fallback(self):
+        for error_type in (VendorUnavailableError, VendorNotConfiguredError):
+            with self.subTest(error_type=error_type):
+                set_config({"data_vendors": {"core_stock_apis": "yfinance,alpha_vantage"}})
+                fallback = mock.Mock(return_value="FALLBACK DATA")
+                with self._route({
+                    "yfinance": _raises(error_type("not available")),
+                    "alpha_vantage": fallback,
+                }), self.assertLogs(router.logger, level="WARNING") as logs:
+                    result = router.route_to_vendor("get_stock_data", "AAPL")
+                self.assertEqual(result, "FALLBACK DATA")
+                fallback.assert_called_once_with("AAPL")
+                self.assertEqual(len(logs.output), 1)
+                self.assertIn("trying next configured vendor", logs.output[0])
+                self.assertNotIn("exhausted", logs.output[0])
+
+    def test_last_vendor_warning_reports_exhaustion(self):
+        for error_type in (VendorUnavailableError, VendorNotConfiguredError):
+            with self.subTest(error_type=error_type):
+                set_config({"data_vendors": {"core_stock_apis": "yfinance,alpha_vantage"}})
+                first = mock.Mock(side_effect=error_type("first unavailable"))
+                last = mock.Mock(side_effect=error_type("last unavailable"))
+                with self._route({"yfinance": first, "alpha_vantage": last}), \
+                        self.assertLogs(router.logger, level="WARNING") as logs:
+                    if error_type is VendorNotConfiguredError:
+                        with self.assertRaises(error_type):
+                            router.route_to_vendor("get_stock_data", "AAPL")
+                    else:
+                        result = router.route_to_vendor("get_stock_data", "AAPL")
+                        self.assertTrue(result.startswith("DATA_UNAVAILABLE"))
+                first.assert_called_once_with("AAPL")
+                last.assert_called_once_with("AAPL")
+                self.assertEqual(len(logs.output), 2)
+                self.assertIn("trying next configured vendor", logs.output[0])
+                self.assertIn("configured vendor chain exhausted", logs.output[1])
+                self.assertNotIn("trying next", logs.output[1])
 
     def test_primary_error_is_logged_not_masked(self):
         # #989: a broken primary is not hidden behind a fallback's verdict. It

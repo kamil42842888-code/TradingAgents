@@ -228,20 +228,25 @@ def route_to_vendor(method: str, *args, **kwargs):
     last_unavailable: VendorUnavailableError | None = None
     failed: Exception | None = None     # a vendor that raised something untyped
     first_error: Exception | None = None
-    for vendor in vendor_chain:
+    for index, vendor in enumerate(vendor_chain):
         vendor_impl = VENDOR_METHODS[method][vendor]
         impl_func = vendor_impl[0] if isinstance(vendor_impl, list) else vendor_impl
+        next_step = (
+            "trying next configured vendor"
+            if index + 1 < len(vendor_chain)
+            else "configured vendor chain exhausted"
+        )
 
         try:
             return impl_func(*args, **kwargs)
         except VendorUnavailableError as e:
-            logger.warning("Vendor %r unavailable for %s: %s; trying next vendor.", vendor, method, e)
+            logger.warning("Vendor %r unavailable for %s: %s; %s.", vendor, method, e, next_step)
             # Kept so an all-unavailable chain can say the vendor was the
             # problem, rather than reporting nothing about the symbol.
             last_unavailable = e
             continue
         except VendorNotConfiguredError as e:
-            logger.warning("Vendor %r not configured for %s; trying next vendor.", vendor, method)
+            logger.warning("Vendor %r not configured for %s; %s.", vendor, method, next_step)
             if first_error is None:
                 first_error = e  # Surface it if no other vendor can serve the call.
             continue

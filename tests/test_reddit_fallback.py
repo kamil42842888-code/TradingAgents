@@ -88,6 +88,35 @@ class TestRssParsing:
         with patch.object(reddit, "urlopen", return_value=_resp(lambda: b"<<not xml>>")):
             assert reddit._fetch_subreddit_rss("NVDA", "stocks", 5, 5.0) is None
 
+    @pytest.mark.parametrize("payload", [
+        b"<html><body>Service unavailable</body></html>",
+        b"<error>Temporarily unavailable</error>",
+        b"<feed/>",
+        b'<entry xmlns="http://www.w3.org/2005/Atom"/>',
+    ])
+    def test_well_formed_non_feed_xml_is_not_reported_as_no_posts(self, payload):
+        with patch.object(reddit, "urlopen", return_value=_resp(lambda: payload)):
+            result = reddit.fetch_reddit_posts("AAPL", subreddits=("stocks",))
+        assert "Reddit unavailable" in result
+        assert "no Reddit posts found" not in result
+
+    def test_valid_empty_atom_feed_still_reports_no_posts(self):
+        payload = b'<feed xmlns="http://www.w3.org/2005/Atom"/>'
+        with patch.object(reddit, "urlopen", return_value=_resp(lambda: payload)):
+            result = reddit.fetch_reddit_posts("AAPL", subreddits=("stocks",))
+        assert "no Reddit posts found" in result
+        assert "unavailable" not in result
+
+    def test_http_404_reports_unavailable_without_retry(self):
+        error = HTTPError("fixture", 404, "Not Found", {}, None)
+        with patch.object(reddit, "urlopen", side_effect=error) as fetch, \
+             patch.object(reddit.time, "sleep") as slept:
+            result = reddit.fetch_reddit_posts("AAPL", subreddits=("stocks",))
+        fetch.assert_called_once()
+        slept.assert_not_called()
+        assert "Reddit unavailable" in result
+        assert "no Reddit posts found" not in result
+
 
 @pytest.mark.unit
 class TestRss429Backoff:

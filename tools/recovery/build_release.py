@@ -16,6 +16,7 @@ DOCS = (
     "RECOVERY_VALIDATION_2026-11-12.md",
     "CONTINUATION_2026-11-19.md",
     "CONTINUATION_VALIDATION_2026-11-19.md",
+    "SCAN_DATA_2026-11-20.md",
 )
 FILES = [
     "KE_DAILY_PAPER.py",
@@ -25,6 +26,8 @@ FILES = [
     "tools/recovery/build_release.py",
     "tools/recovery/release_history.json",
     "tools/recovery/restore_sources.py",
+    "tradingagents/dataflows/router.py",
+    "tradingagents/dataflows/vendors/reddit.py",
     "tradingagents/paper/swing_scan.py",
     "tradingagents/paper/dashboard.py",
     *[
@@ -69,6 +72,8 @@ FILES = [
             "test_chatgpt_auth.py",
             "test_cli_updates.py",
             "test_ledger_replace.py",
+            "test_vendor_routing.py",
+            "test_reddit_fallback.py",
         )
     ],
 ]
