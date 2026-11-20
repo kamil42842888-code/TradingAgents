@@ -314,7 +314,10 @@ def _graph_factory(root: Path):
     from tradingagents.default_config import DEFAULT_CONFIG
     from tradingagents.graph.trading_graph import TradingAgentsGraph
 
+    from .execution_mandate import CONFIG_KEY, V3_MODE
+
     cfg = DEFAULT_CONFIG.copy()
+    cfg[CONFIG_KEY] = V3_MODE
     cfg["results_dir"] = str(root / "agent_results")
     cfg["memory_log_path"] = str(root / "memory.md")
     return TradingAgentsGraph(config=cfg)

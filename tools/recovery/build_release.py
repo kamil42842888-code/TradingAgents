@@ -17,6 +17,7 @@ DOCS = (
     "CONTINUATION_2026-11-19.md",
     "CONTINUATION_VALIDATION_2026-11-19.md",
     "SCAN_DATA_2026-11-20.md",
+    "FORWARD_PAPER_2026-11-20.md",
 )
 FILES = [
     "KE_DAILY_PAPER.py",
@@ -26,6 +27,8 @@ FILES = [
     "tools/recovery/build_release.py",
     "tools/recovery/release_history.json",
     "tools/recovery/restore_sources.py",
+    "tradingagents/agents/managers/portfolio_manager.py",
+    "tradingagents/agents/trader/trader.py",
     "tradingagents/dataflows/router.py",
     "tradingagents/dataflows/vendors/reddit.py",
     "tradingagents/paper/swing_scan.py",
@@ -41,6 +44,8 @@ FILES = [
             "daily_health.py",
             "daily_sessions.json",
             "daily_transaction.py",
+            "decision.py",
+            "execution_mandate.py",
             "paper_forward.py",
             "paper_bridge.py",
             "runner.py",
@@ -53,6 +58,8 @@ FILES = [
     *[
         "tests/" + name
         for name in (
+            "__init__.py",
+            "conftest.py",
             "test_daily_support.py",
             "test_daily_paper_integration.py",
             "test_recovery_release.py",
@@ -65,7 +72,14 @@ FILES = [
             "test_daily_status_cli.py",
             "test_windows_task_status.py",
             "test_recovery_build.py",
+            "test_autopilot_decision.py",
+            "test_autopilot_state.py",
+            "test_autopilot_runner.py",
+            "test_execution_mandate.py",
+            "test_forward_execution_contract.py",
             "test_autopilot_feeds.py",
+            "test_autopilot_live_dry_run.py",
+            "test_autopilot_verify_dry_run.py",
             "test_autopilot_rehearsal.py",
             "test_autopilot_dashboard.py",
             "test_swing_scan.py",

@@ -15,6 +15,7 @@ from tradingagents.agents.structured import (
     bind_structured,
     invoke_structured_or_freetext,
 )
+from tradingagents.paper.autopilot.execution_mandate import execution_mandate
 
 
 def create_trader(llm):
@@ -59,6 +60,7 @@ def create_trader(llm):
                     "implies, or omit the field if you cannot state a number. "
                     + NO_EXTERNAL_TOOLS
                     + get_language_instruction()
+                    + execution_mandate("trader")
                 ),
             },
             {

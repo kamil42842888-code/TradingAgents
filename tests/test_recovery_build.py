@@ -1,5 +1,6 @@
 """Release construction must retain a real, pinned source-installation boundary."""
 
+import ast
 import importlib.util
 import json
 import shutil
@@ -15,6 +16,42 @@ spec = importlib.util.spec_from_file_location(
 )
 builder = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(builder)
+
+
+def test_installed_verifier_has_packaged_tests_and_shared_fixtures():
+    verifier = ast.parse((REPOSITORY / "Verify_Koral_Recovery.py").read_text())
+    selected = next(
+        ast.literal_eval(node.value)
+        for node in verifier.body
+        if isinstance(node, ast.Assign)
+        and any(isinstance(target, ast.Name) and target.id == "TESTS" for target in node.targets)
+    )
+    packaged = set(builder.FILES)
+    pending = set(selected) | {"tests/__init__.py", "tests/conftest.py"}
+    visited = set()
+    while pending:
+        relative = pending.pop()
+        if relative in visited:
+            continue
+        assert relative in packaged, "Installed verifier dependency missing from payload: " + relative
+        visited.add(relative)
+        source = ast.parse((REPOSITORY / relative).read_text())
+        for node in ast.walk(source):
+            if isinstance(node, ast.ImportFrom) and node.module:
+                modules = (
+                    ["tests." + alias.name for alias in node.names]
+                    if node.module == "tests"
+                    else [node.module]
+                )
+            elif isinstance(node, ast.Import):
+                modules = [alias.name for alias in node.names]
+            else:
+                continue
+            pending.update(
+                module.replace(".", "/") + ".py"
+                for module in modules
+                if module.startswith("tests.")
+            )
 
 
 @pytest.fixture

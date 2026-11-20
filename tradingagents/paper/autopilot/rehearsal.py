@@ -23,7 +23,11 @@ from tradingagents.paper.engine import Bar
 DAYS = ("2026-10-21", "2026-10-22", "2026-10-23", "2026-10-26", "2026-10-27")
 TICKER = "KXDEMO"  # Fictional symbol
 PM = ("Rating: Overweight. Initiate after TWO consecutive closes above $102.00. "
-      "Use a firm stop-loss at $92.00 for the paper trade.")
+      "Use a firm stop-loss at $92.00 for the paper trade.\n"
+      "KORAL_V3_EXECUTION_V1\n"
+      "action=CONDITIONAL_LONG\ntrigger_usd=102.00\nstop_usd=92.00\n"
+      "required_closes=2\nallocation_fraction=0.05\nexpiry_days=14\n"
+      "holding_sessions=20\nEND_KORAL_V3_EXECUTION")
 TRADER = "**Stop Loss**: $92.00"
 BARS = {
     DAYS[0]: Bar(99.5, 101, 99, 100),

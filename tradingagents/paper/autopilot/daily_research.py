@@ -188,9 +188,12 @@ def guarded_graph(root: Path, config: dict, guard: RequestBudget):
     from tradingagents.default_config import build_default_config
     from tradingagents.graph.trading_graph import TradingAgentsGraph
 
+    from .execution_mandate import CONFIG_KEY, V3_MODE
+
     # Re-read environment after the supervisor loads the project .env; do not
     # copy/import credentials into the deployment package or operation logs.
     cfg = build_default_config()
+    cfg[CONFIG_KEY] = V3_MODE
     plan_only = config.get("model_billing_mode") == "chatgpt_plan_only"
     if plan_only:
         from .daily_plan import check_route
